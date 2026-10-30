@@ -1,0 +1,32 @@
+# Environment variables
+.env
+.env.local
+
+# Python cache & virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Node modules (for future frontend)
+node_modules/
+.next/
+dist/
+build/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# Log files
+*.log
+data/qloo_log.jsonl
+
+# Operating system files
+.DS_Store
+Thumbs.db
+

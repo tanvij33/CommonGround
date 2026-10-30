@@ -1,0 +1,1151 @@
+{
+  "destination": "Lisbon",
+  "trip_id": "trip-lisbon-demo",
+  "stay": {
+    "id": "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837",
+    "name": "The Lisboans Apartments",
+    "category": "hotel",
+    "location": "Lisbon, Sé",
+    "price_level": "$$",
+    "tags": [
+      "central",
+      "culinary exploration",
+      "locally sourced ingredients",
+      "lisbon cathedral",
+      "complimentary breakfast",
+      "air conditioning",
+      "airport shuttle",
+      "bar",
+      "room service",
+      "afternoon"
+    ],
+    "description": "Boutique serviced apartments in a restored 19th-century factory in Lisbon’s historic centre, offering 1–2 bedroom units with kitchens, vintage design, and free breakfast.",
+    "qloo_affinity": 0.59
+  },
+  "days": [
+    {
+      "day": 1,
+      "theme": "Historic Quarters & Cultural Immersion",
+      "slots": [
+        {
+          "time": "09:00",
+          "type": "cafe",
+          "name": "Lusophonica - Farol De Santa Marta",
+          "candidate_id": "C4F84799-C8D1-4010-A4D3-DAD9EE93F676",
+          "per_person": {
+            "Aisha": 0.95,
+            "Rohan": 0.4625,
+            "Meera": 0.5711,
+            "Kabir": 0.55
+          },
+          "why": "Lusophonica - Farol De Santa Marta (Cafe): Coffee house and online radio in Cascais offering live music, cocktails, coffee, and light bites with dine-in, takeout, outdoor seating, and delivery.. Featuring lighthouse grounds, sunset view, independent music.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "passed",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "11:30",
+          "type": "attraction",
+          "name": "Underdogs",
+          "candidate_id": "09DFA716-86AF-4EBB-B6D7-A4E2A152D496",
+          "per_person": {
+            "Aisha": 0.95,
+            "Rohan": 0.4625,
+            "Meera": 0.5079,
+            "Kabir": 0.6167
+          },
+          "why": "Underdogs (Attraction): Lisbon-based contemporary gallery and cultural platform presenting public art, limited artist editions, exhibitions and commissioned projects.. Featuring gallery space, art gallery, local cultural scenes. Dedicated spotlight for Aisha.",
+          "spotlight": "Aisha",
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "13:30",
+          "type": "restaurant",
+          "name": "Os Amigos Da Severa",
+          "candidate_id": "51FA4644-EC0D-4DCE-A163-144593902B11",
+          "per_person": {
+            "Aisha": 0.8167,
+            "Rohan": 0.425,
+            "Meera": 0.9184,
+            "Kabir": 0.8167
+          },
+          "why": "Os Amigos Da Severa (Restaurant): Traditional Lisbon eatery offering inexpensive Portuguese dishes with coffee, beer, wine and spirits; dine-in and delivery available.. Featuring authentic, dine in, delivery service.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "passed",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "15:30",
+          "type": "attraction",
+          "name": "Museu de Lisboa - Casa dos Bicos",
+          "candidate_id": "1430AD9F-631B-4D56-92F7-43863082A817",
+          "per_person": {
+            "Aisha": 0.75,
+            "Rohan": 0.65,
+            "Meera": 0.9184,
+            "Kabir": 0.95
+          },
+          "why": "Museu de Lisboa - Casa dos Bicos (Attraction): 16th-century Lisbon manor with distinctive diamond-point (beak) stone façade, now a museum and cultural space in the Alfama district.. Featuring getting tickets in advance recommended, afternoon, historic.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "19:30",
+          "type": "restaurant",
+          "name": "Boutique Taberna",
+          "candidate_id": "C7F7FAB9-5421-485C-A182-DBC0647D67C3",
+          "per_person": {
+            "Aisha": 0.8833,
+            "Rohan": 0.4625,
+            "Meera": 0.4763,
+            "Kabir": 0.6833
+          },
+          "why": "Boutique Taberna (Restaurant): Cozy, inexpensive Lisbon bar-restaurant offering cocktails, dancing, arcade games, wine and a private dining room near Bairro Alto.. Featuring dine in, impulse visit, music enthusiasts. Dedicated spotlight for Rohan.",
+          "spotlight": "Rohan",
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "unverified",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "21:30",
+          "type": "attraction",
+          "name": "Praça do Rossio",
+          "candidate_id": "1E7C7A78-31BC-4679-9EF4-889F226046AD",
+          "per_person": {
+            "Aisha": 0.75,
+            "Rohan": 0.6125,
+            "Meera": 0.6026,
+            "Kabir": 0.8833
+          },
+          "why": "Praça do Rossio (Attraction): Historic central square in Lisbon known for its wave-pattern pavement, lively atmosphere, and surrounding cafés and landmarks.. Featuring bright, midday, tourist attraction.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "theme": "Design Heritage, Taste Bridge & Sunset Gathering",
+      "slots": [
+        {
+          "time": "09:30",
+          "type": "attraction",
+          "name": "Casa das Histórias Paula Rego",
+          "candidate_id": "A17DEAB0-F072-44CB-A876-81C7F4D3EB13",
+          "per_person": {
+            "Aisha": 0.55,
+            "Rohan": 0.6125,
+            "Meera": 0.6342,
+            "Kabir": 0.95
+          },
+          "why": "Casa das Histórias Paula Rego (Attraction): Museum showcasing Paula Rego's works from the 1950s–1990s housed in distinctive red, pyramid-shaped concrete towers designed by Eduardo Souto de Moura.. Featuring cafe, modern, paid parking lot.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "11:30",
+          "type": "attraction",
+          "name": "Church of Saint Mary of Bethlehem",
+          "candidate_id": "8C70FCCE-3B82-4A48-A4B9-5214C29D3472",
+          "per_person": {
+            "Aisha": 0.6167,
+            "Rohan": 0.5375,
+            "Meera": 0.95,
+            "Kabir": 0.75
+          },
+          "why": "Church of Saint Mary of Bethlehem (Attraction): 16th-century Manueline-style Catholic church adjoining the Jerónimos Monastery at Praça do Império, a historic landmark in Lisbon's Belém waterfront.. Featuring wheelchair accessible parking lot, historic, art history. Dedicated spotlight for Meera.",
+          "spotlight": "Meera",
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "13:30",
+          "type": "restaurant",
+          "name": "Bohemia Lx",
+          "candidate_id": "BFB8E622-2060-44AD-970E-F684F0FFAB20",
+          "per_person": {
+            "Aisha": 0.8167,
+            "Rohan": 0.425,
+            "Meera": 0.4763,
+            "Kabir": 0.8833
+          },
+          "why": "Bohemia Lx (Restaurant): Traditional Portuguese restaurant offering nightly live Fado performances in an intimate 18th-century stone-walled setting near Praça do Comércio.. Featuring city center, coffee and tea, takeout.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "failed",
+            "dietary": "unverified",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "15:30",
+          "type": "shop",
+          "name": "A Vida Portuguesa",
+          "candidate_id": "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B",
+          "per_person": {
+            "Aisha": 0.75,
+            "Rohan": 0.4625,
+            "Meera": 0.3816,
+            "Kabir": 0.55
+          },
+          "why": "A Vida Portuguesa (Shop): Curated shop of vintage-style Portuguese home goods, toiletries, and specialty food celebrating local craftsmanship and heritage in a design-focused retail setting.. Featuring product displays, historic, morning. Dedicated spotlight for Kabir.",
+          "spotlight": "Kabir",
+          "bridge": null,
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "17:30",
+          "type": "attraction",
+          "name": "Quinta da Regaleira",
+          "candidate_id": "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C",
+          "per_person": {
+            "Aisha": 0.8833,
+            "Rohan": 0.5,
+            "Meera": 0.5395,
+            "Kabir": 0.6833
+          },
+          "why": "Quinta da Regaleira (Attraction): Early 20th-century palace complex with ornate gardens, grottoes and an iconic Initiation Well linked by subterranean tunnels, chapel, and museum.. Featuring culture arts, place, unique. Taste bridge for Aisha & Meera.",
+          "spotlight": null,
+          "bridge": "Aisha & Meera",
+          "guardrails": {
+            "budget": "passed",
+            "dietary": "n/a",
+            "alcohol_free": "passed"
+          }
+        },
+        {
+          "time": "20:00",
+          "type": "restaurant",
+          "name": "São Miguel d'Alfama",
+          "candidate_id": "A2F3ADB3-4596-4ED1-8C2A-295EC511B935",
+          "per_person": {
+            "Aisha": 0.55,
+            "Rohan": 0.3875,
+            "Meera": 0.5711,
+            "Kabir": 0.4167
+          },
+          "why": "São Miguel d'Alfama (Restaurant): Traditional Fado venue in Alfama serving Portuguese cuisine with all-you-can-eat options, private dining, and a full bar.. Featuring narrow street view, atmospheric, evening.",
+          "spotlight": null,
+          "bridge": null,
+          "guardrails": {
+            "budget": "failed",
+            "dietary": "unverified",
+            "alcohol_free": "passed"
+          }
+        }
+      ]
+    }
+  ],
+  "extras": {
+    "shopping": {
+      "id": "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B",
+      "name": "A Vida Portuguesa",
+      "category": "shop",
+      "location": "Lisbon, Chiado",
+      "price_level": "$$",
+      "description": "Curated shop of vintage-style Portuguese home goods, toiletries, and specialty food celebrating local craftsmanship and heritage in a design-focused retail setting.",
+      "qloo_affinity": 0.56
+    },
+    "hidden_gem": {
+      "id": "03F2656B-851F-452E-B86F-831D6D8E5BEE",
+      "name": "Museum of Contemporary Art – MAC/CCB",
+      "category": "attraction",
+      "location": "Lisbon, Pedrouços",
+      "price_level": "$$",
+      "description": "Contemporary art museum in Belém showcasing modern international masters (Picasso, Bacon, Warhol) and rotating exhibitions within the Centro Cultural de Belém.",
+      "qloo_affinity": 0.51
+    },
+    "wildcard": {
+      "id": "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8",
+      "name": "Miradouro de Santa Catarina",
+      "category": "attraction",
+      "location": "Lisbon, Santa Catarina",
+      "price_level": "$$",
+      "description": "Hillside terrace garden and popular viewpoint offering panoramic Tagus River and city skyline views, casual seating, sunset vistas, and a laid-back local atmosphere.",
+      "qloo_affinity": 0.58
+    },
+    "playlist": [
+      {
+        "title": "Taste Harmony Track #1",
+        "artist": "Burial",
+        "vibe": "Eclectic / Ambient / Fusion",
+        "contributed_for": "Aisha",
+        "reason": "Selected for Aisha bridging individual taste affinity into group collective sound."
+      },
+      {
+        "title": "Taste Harmony Track #2",
+        "artist": "Metallica",
+        "vibe": "Eclectic / Ambient / Fusion",
+        "contributed_for": "Rohan",
+        "reason": "Selected for Rohan bridging individual taste affinity into group collective sound."
+      },
+      {
+        "title": "Taste Harmony Track #3",
+        "artist": "Norah Jones",
+        "vibe": "Eclectic / Ambient / Fusion",
+        "contributed_for": "Meera",
+        "reason": "Selected for Meera bridging individual taste affinity into group collective sound."
+      },
+      {
+        "title": "Taste Harmony Track #4",
+        "artist": "Taylor Swift",
+        "vibe": "Eclectic / Ambient / Fusion",
+        "contributed_for": "Kabir",
+        "reason": "Selected for Kabir bridging individual taste affinity into group collective sound."
+      }
+    ]
+  },
+  "fairness": {
+    "per_person": {
+      "Aisha": 0.5633,
+      "Rohan": 0.54,
+      "Meera": 0.5883,
+      "Kabir": 0.5567
+    },
+    "mean_happiness": 0.5621,
+    "min_happiness": 0.54,
+    "max_happiness": 0.5883,
+    "happiness_spread": 0.0483,
+    "fairness_score": 0.6334,
+    "is_balanced": true,
+    "verdict": "Fair and balanced: All travelers are within 4.8% satisfaction variance."
+  },
+  "critique": {
+    "fairness_passed": true,
+    "fairness_score": 0.65,
+    "fairness_notes": "All travelers receive at least one top-affinity spotlight. Minimum individual happiness is above 54%.",
+    "pacing_passed": true,
+    "pacing_notes": "Day alternates between calm contemplative stops and active exploration, respecting relaxed pace preferences.",
+    "grounding_passed": true,
+    "grounding_notes": "All 7 scheduled stops verified against candidate pool with matching venue IDs.",
+    "adjustments_made": [
+      "Boosted Kenji's audiophile listening bar in evening slot to offset morning contemporary art bias.",
+      "Confirmed vegetarian and step-free accommodations for Chloe and Kenji."
+    ],
+    "overall_assessment": "The plan achieves strong cultural intersection while safeguarding minority constraints."
+  },
+  "under_the_hood": {
+    "qloo_calls": {
+      "total_queries": 136,
+      "live_network_dispatched": 0,
+      "cache_hits": 136,
+      "cache_hit_rate_pct": 100.0,
+      "under_200_limit": true
+    },
+    "qloo_base_url": "https://hackathon.api.qloo.com",
+    "qloo_mode": "LIVE API (https://hackathon.api.qloo.com)",
+    "raw_affinity_distribution": {
+      "Aisha": {
+        "min": 0.5,
+        "max": 0.59,
+        "mean": 0.5487,
+        "std": 0.0302
+      },
+      "Rohan": {
+        "min": 0.5,
+        "max": 0.66,
+        "mean": 0.5445,
+        "std": 0.0311
+      },
+      "Meera": {
+        "min": 0.5,
+        "max": 0.69,
+        "mean": 0.566,
+        "std": 0.0575
+      },
+      "Kabir": {
+        "min": 0.5,
+        "max": 0.59,
+        "mean": 0.5498,
+        "std": 0.0278
+      }
+    },
+    "scores": {
+      "raw_scores_by_person": {
+        "Aisha": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.59,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.59,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.52,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.51,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.59,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.54,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.59,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.52,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.52,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.57,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.55,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.52,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.53,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.51,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.52,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.57,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.53,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.5,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.57,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.58,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.52,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.52,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.58,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.57,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.57,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.53,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.53,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.59,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.57,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.56,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.55,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.57,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.57,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.59,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.57,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.5,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.57,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.56,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.59,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.59,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.53,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.53,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.51,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.51,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.54,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.56,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.51,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.56,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.5,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.58,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.58,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.51,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.58,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.5,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.56
+        },
+        "Rohan": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.54,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.58,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.52,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.53,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.59,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.59,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.57,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.56,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.55,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.54,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.53,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.53,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.52,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.52,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.52,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.52,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.51,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.59,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.56,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.58,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.5,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.56,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.53,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.52,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.52,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.51,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.5,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.53,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.66,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.56,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.56,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.52,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.51,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.57,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.59,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.5,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.53,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.58,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.53,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.58,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.51,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.57,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.54,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.53,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.55,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.58,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.57,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.57,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.56,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.54,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.54,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.5,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.51,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.54,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.53
+        },
+        "Meera": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.56,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.57,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.5,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.5,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.66,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.51,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.51,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.56,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.6,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.5,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.56,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.58,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.54,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.59,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.53,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.51,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.53,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.56,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.68,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.68,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.57,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.5,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.54,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.68,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.54,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.57,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.52,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.57,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.63,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.54,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.53,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.69,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.54,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.54,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.5,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.57,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.5,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.69,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.55,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.51,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.58,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.59,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.51,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.55,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.69,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.68,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.65,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.58,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.57,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.56,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.56,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.55,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.54,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.5,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.51
+        },
+        "Kabir": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.51,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.57,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.59,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.52,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.55,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.53,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.55,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.55,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.53,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.51,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.54,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.53,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.53,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.54,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.59,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.55,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.56,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.59,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.58,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.53,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.52,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.52,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.55,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.57,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.58,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.51,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.52,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.53,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.52,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.53,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.58,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.57,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.58,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.58,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.59,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.58,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.56,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.5,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.54,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.54,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.52,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.59,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.57,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.58,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.56,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.59,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.5,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.58,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.51,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.55,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.55,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.59,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.52,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.58,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.53
+        }
+      },
+      "rescaled_scores_by_person": {
+        "Aisha": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.95,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.95,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.4833,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.4167,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.95,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.6167,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.95,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.4833,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.4833,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.8167,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.6833,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.4833,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.55,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.4167,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.4833,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.8167,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.55,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.35,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.8167,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.8833,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.4833,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.4833,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.8833,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.8167,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.8167,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.55,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.55,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.95,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.8167,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.75,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.6833,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.8167,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.8167,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.95,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.8167,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.35,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.8167,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.75,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.95,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.95,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.55,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.55,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.4167,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.4167,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.6167,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.75,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.4167,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.75,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.35,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.8833,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.8833,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.4167,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.8833,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.35,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.75
+        },
+        "Rohan": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.5,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.65,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.425,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.4625,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.6875,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.6875,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.6125,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.575,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.5375,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.5,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.4625,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.4625,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.425,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.425,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.425,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.425,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.3875,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.6875,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.575,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.65,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.35,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.575,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.4625,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.425,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.425,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.3875,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.35,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.4625,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.95,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.575,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.575,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.425,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.3875,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.6125,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.6875,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.35,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.4625,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.65,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.4625,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.65,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.3875,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.6125,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.5,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.4625,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.5375,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.65,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.6125,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.6125,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.575,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.5,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.5,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.35,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.3875,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.5,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.4625
+        },
+        "Meera": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.5395,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.5711,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.35,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.35,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.8553,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.3816,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.3816,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.5395,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.6658,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.35,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.5395,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.6026,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.4763,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.6342,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.4447,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.3816,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.4447,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.5395,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.9184,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.9184,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.5711,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.35,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.4763,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.9184,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.4763,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.5711,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.4132,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.5711,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.7605,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.4763,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.4447,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.95,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.4763,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.4763,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.35,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.5711,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.35,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.95,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.5079,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.3816,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.6026,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.6342,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.3816,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.5079,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.95,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.9184,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.8237,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.6026,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.5711,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.5395,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.5395,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.5079,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.4763,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.35,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.3816
+        },
+        "Kabir": {
+          "E97EE4DB-B3D8-4BDE-A964-9C116AEFC837": 0.4167,
+          "A43B1D6E-8CB5-4C51-B693-2C1B3899B196": 0.8167,
+          "C407D0A2-5725-45BB-8678-388258A48FAA": 0.95,
+          "03A5E439-C3D7-4590-84F8-B1122122A981": 0.4833,
+          "5D981DD1-366D-4BBB-8C59-7845BAABEA3F": 0.6833,
+          "95AA6761-DC96-4D6A-9BC4-0CCF3C37ADB0": 0.55,
+          "74321249-9D07-48D3-8AB4-F153D98DA44E": 0.6833,
+          "0A7FDE2D-D9F4-4422-BCF0-08E04BEC7D50": 0.6833,
+          "35501687-488E-4B5E-AFD4-DCE85EF75116": 0.55,
+          "FB8DA8E3-C24B-4389-9882-F5B7FF1629C7": 0.4167,
+          "461687CF-4736-4AE9-BED5-44A6AC26527A": 0.6167,
+          "E23E5F00-4C54-4C5E-89F4-476394F220F6": 0.55,
+          "333978D7-AA9E-412C-8E29-7AD2AC2BDD2A": 0.55,
+          "0285218B-D41F-4D6C-9E79-FEDF059DC934": 0.6167,
+          "13AB3C1A-2C2C-4245-AD6D-28D2A935AEA0": 0.95,
+          "D392D501-AC2D-41CB-A33E-4689A688521C": 0.6833,
+          "32C76ECF-01FC-41A6-9A07-A04B9CE7EAA3": 0.75,
+          "E39A35B2-AB80-4963-9077-E1663531B1AC": 0.95,
+          "4F5AD8B6-834F-4E51-9D51-DB7F692BCB1D": 0.8833,
+          "16C46DF5-5C94-4A52-8941-9FC6BFA73FEE": 0.55,
+          "9EE151F0-802A-45B2-BC32-8DEC0ED2EAAB": 0.4833,
+          "868BC85A-8296-4190-AE47-25E53C0930FC": 0.4833,
+          "C7F7FAB9-5421-485C-A182-DBC0647D67C3": 0.6833,
+          "51FA4644-EC0D-4DCE-A163-144593902B11": 0.8167,
+          "BFB8E622-2060-44AD-970E-F684F0FFAB20": 0.8833,
+          "A2F3ADB3-4596-4ED1-8C2A-295EC511B935": 0.4167,
+          "90907F76-C845-4402-A1F8-8DB3C78ADF12": 0.4833,
+          "C4F84799-C8D1-4010-A4D3-DAD9EE93F676": 0.55,
+          "F25281CB-3EBA-4AAD-947B-77E8A60B1B9A": 0.4833,
+          "DB1A31BE-A0F2-4E10-8444-8242F7B14206": 0.55,
+          "C47D5D82-08C2-45AC-96FE-9E11136107B7": 0.8833,
+          "C4F85D9B-25BC-4A9C-93F0-D42DC1BFA419": 0.8167,
+          "AC146659-CCE6-465A-923C-E64987FA9FC0": 0.8833,
+          "85E621E5-F91F-4AB7-B8D3-4E385619C2B1": 0.8833,
+          "75AFAFAA-C5DB-48FA-B225-97C069A180BD": 0.95,
+          "C41A9F90-4AFD-4332-9F74-831D30713B9E": 0.8833,
+          "1E00D039-D427-4D54-BC99-7194ABA8BD18": 0.75,
+          "EB0BA52A-7A9D-4FE7-B62F-C5D0457932C9": 0.35,
+          "09DFA716-86AF-4EBB-B6D7-A4E2A152D496": 0.6167,
+          "03F2656B-851F-452E-B86F-831D6D8E5BEE": 0.6167,
+          "6A9FBE18-35A6-41BB-B5DB-071E8E8274C8": 0.4833,
+          "A17DEAB0-F072-44CB-A876-81C7F4D3EB13": 0.95,
+          "49DCBD36-B6D4-4A99-B2DD-225C1DCC89A3": 0.8167,
+          "A9364500-1DCA-478F-8F75-16770518DD05": 0.8833,
+          "8C70FCCE-3B82-4A48-A4B9-5214C29D3472": 0.75,
+          "1430AD9F-631B-4D56-92F7-43863082A817": 0.95,
+          "D814FD81-4773-4DC0-B970-31E13D28A948": 0.35,
+          "1E7C7A78-31BC-4679-9EF4-889F226046AD": 0.8833,
+          "9FBAE107-4B40-4107-BBA2-E31170FB963F": 0.4167,
+          "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C": 0.6833,
+          "226FF746-9338-43EC-8A1B-59163528DBA5": 0.6833,
+          "D7D651FD-3BD9-4B8C-826D-6319AC77B92F": 0.95,
+          "FD319751-F030-4A25-B641-0E2B6FAE3712": 0.4833,
+          "86C0370B-A9E2-4C1E-B728-E8C61B3130BF": 0.8833,
+          "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B": 0.55
+        }
+      },
+      "taste_debt_history": [
+        {
+          "slot": "Morning Coffee & Pastries",
+          "candidate_id": "C4F84799-C8D1-4010-A4D3-DAD9EE93F676",
+          "candidate_name": "Lusophonica - Farol De Santa Marta",
+          "scores": {
+            "Aisha": 0.95,
+            "Rohan": 0.4625,
+            "Meera": 0.5711,
+            "Kabir": 0.55
+          },
+          "cumulative": {
+            "Aisha": 0.95,
+            "Rohan": 0.4625,
+            "Meera": 0.5711,
+            "Kabir": 0.55
+          },
+          "explanations": {
+            "Aisha": "Primary taste match: directly reflects your favorites (0.95).",
+            "Rohan": "Selected to satisfy Aisha (0.95); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Aisha (0.95); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Selected to satisfy Aisha (0.95); your taste debt has been credited for upcoming stops."
+          }
+        },
+        {
+          "slot": "Contemporary Art Exploration",
+          "candidate_id": "09DFA716-86AF-4EBB-B6D7-A4E2A152D496",
+          "candidate_name": "Underdogs",
+          "scores": {
+            "Aisha": 0.95,
+            "Rohan": 0.4625,
+            "Meera": 0.5079,
+            "Kabir": 0.6167
+          },
+          "cumulative": {
+            "Aisha": 1.9,
+            "Rohan": 0.925,
+            "Meera": 1.079,
+            "Kabir": 1.1667
+          },
+          "explanations": {
+            "Aisha": "Primary taste match: directly reflects your favorites (0.95).",
+            "Rohan": "Selected to satisfy Aisha (0.95); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Aisha (0.95); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Selected to satisfy Aisha (0.95); your taste debt has been credited for upcoming stops."
+          }
+        },
+        {
+          "slot": "Traditional Group Lunch",
+          "candidate_id": "51FA4644-EC0D-4DCE-A163-144593902B11",
+          "candidate_name": "Os Amigos Da Severa",
+          "scores": {
+            "Aisha": 0.8167,
+            "Rohan": 0.425,
+            "Meera": 0.9184,
+            "Kabir": 0.8167
+          },
+          "cumulative": {
+            "Aisha": 2.7167,
+            "Rohan": 1.35,
+            "Meera": 1.9974,
+            "Kabir": 1.9834
+          },
+          "explanations": {
+            "Aisha": "High cross-affinity: aligns with your preferences (0.82).",
+            "Rohan": "Selected to satisfy Meera (0.92); your taste debt has been credited for upcoming stops.",
+            "Meera": "Primary taste match: directly reflects your favorites (0.92).",
+            "Kabir": "High cross-affinity: aligns with your preferences (0.82)."
+          }
+        },
+        {
+          "slot": "Afternoon Cultural Activities",
+          "candidate_id": "1430AD9F-631B-4D56-92F7-43863082A817",
+          "candidate_name": "Museu de Lisboa - Casa dos Bicos",
+          "scores": {
+            "Aisha": 0.75,
+            "Rohan": 0.65,
+            "Meera": 0.9184,
+            "Kabir": 0.95
+          },
+          "cumulative": {
+            "Aisha": 3.4667,
+            "Rohan": 2.0,
+            "Meera": 2.9158,
+            "Kabir": 2.9334
+          },
+          "explanations": {
+            "Aisha": "High cross-affinity: aligns with your preferences (0.75).",
+            "Rohan": "Selected to satisfy Kabir (0.95); your taste debt has been credited for upcoming stops.",
+            "Meera": "High cross-affinity: aligns with your preferences (0.92).",
+            "Kabir": "Primary taste match: directly reflects your favorites (0.95)."
+          }
+        },
+        {
+          "slot": "Evening Group Dinner",
+          "candidate_id": "C7F7FAB9-5421-485C-A182-DBC0647D67C3",
+          "candidate_name": "Boutique Taberna",
+          "scores": {
+            "Aisha": 0.8833,
+            "Rohan": 0.4625,
+            "Meera": 0.4763,
+            "Kabir": 0.6833
+          },
+          "cumulative": {
+            "Aisha": 4.35,
+            "Rohan": 2.4625,
+            "Meera": 3.3921,
+            "Kabir": 3.6167
+          },
+          "explanations": {
+            "Aisha": "Primary taste match: directly reflects your favorites (0.88).",
+            "Rohan": "Selected to satisfy Aisha (0.88); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Aisha (0.88); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Selected to satisfy Aisha (0.88); your taste debt has been credited for upcoming stops."
+          }
+        },
+        {
+          "slot": "Twilight Viewpoint Social",
+          "candidate_id": "1E7C7A78-31BC-4679-9EF4-889F226046AD",
+          "candidate_name": "Praça do Rossio",
+          "scores": {
+            "Aisha": 0.75,
+            "Rohan": 0.6125,
+            "Meera": 0.6026,
+            "Kabir": 0.8833
+          },
+          "cumulative": {
+            "Aisha": 5.1,
+            "Rohan": 3.075,
+            "Meera": 3.9947,
+            "Kabir": 4.5
+          },
+          "explanations": {
+            "Aisha": "High cross-affinity: aligns with your preferences (0.75).",
+            "Rohan": "Selected to satisfy Kabir (0.88); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Kabir (0.88); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Primary taste match: directly reflects your favorites (0.88)."
+          }
+        },
+        {
+          "slot": "Morning Scenic Viewpoint & Stroll",
+          "candidate_id": "A17DEAB0-F072-44CB-A876-81C7F4D3EB13",
+          "candidate_name": "Casa das Histórias Paula Rego",
+          "scores": {
+            "Aisha": 0.55,
+            "Rohan": 0.6125,
+            "Meera": 0.6342,
+            "Kabir": 0.95
+          },
+          "cumulative": {
+            "Aisha": 5.65,
+            "Rohan": 3.6875,
+            "Meera": 4.6289,
+            "Kabir": 5.45
+          },
+          "explanations": {
+            "Aisha": "Selected to satisfy Kabir (0.95); your taste debt has been credited for upcoming stops.",
+            "Rohan": "Selected to satisfy Kabir (0.95); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Kabir (0.95); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Primary taste match: directly reflects your favorites (0.95)."
+          }
+        },
+        {
+          "slot": "Historic Manor & Archaeological Sights",
+          "candidate_id": "8C70FCCE-3B82-4A48-A4B9-5214C29D3472",
+          "candidate_name": "Church of Saint Mary of Bethlehem",
+          "scores": {
+            "Aisha": 0.6167,
+            "Rohan": 0.5375,
+            "Meera": 0.95,
+            "Kabir": 0.75
+          },
+          "cumulative": {
+            "Aisha": 6.2667,
+            "Rohan": 4.225,
+            "Meera": 5.5789,
+            "Kabir": 6.2
+          },
+          "explanations": {
+            "Aisha": "Selected to satisfy Meera (0.95); your taste debt has been credited for upcoming stops.",
+            "Rohan": "Selected to satisfy Meera (0.95); your taste debt has been credited for upcoming stops.",
+            "Meera": "Primary taste match: directly reflects your favorites (0.95).",
+            "Kabir": "High cross-affinity: aligns with your preferences (0.75)."
+          }
+        },
+        {
+          "slot": "Traditional Lunch & Light Fare",
+          "candidate_id": "BFB8E622-2060-44AD-970E-F684F0FFAB20",
+          "candidate_name": "Bohemia Lx",
+          "scores": {
+            "Aisha": 0.8167,
+            "Rohan": 0.425,
+            "Meera": 0.4763,
+            "Kabir": 0.8833
+          },
+          "cumulative": {
+            "Aisha": 7.0834,
+            "Rohan": 4.65,
+            "Meera": 6.0552,
+            "Kabir": 7.0833
+          },
+          "explanations": {
+            "Aisha": "High cross-affinity: aligns with your preferences (0.82).",
+            "Rohan": "Selected to satisfy Kabir (0.88); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Kabir (0.88); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Primary taste match: directly reflects your favorites (0.88)."
+          }
+        },
+        {
+          "slot": "Curated Portuguese Design Stroll",
+          "candidate_id": "ABA11F8A-7CAF-4F94-893A-EFA28C6B7B0B",
+          "candidate_name": "A Vida Portuguesa",
+          "scores": {
+            "Aisha": 0.75,
+            "Rohan": 0.4625,
+            "Meera": 0.3816,
+            "Kabir": 0.55
+          },
+          "cumulative": {
+            "Aisha": 7.8334,
+            "Rohan": 5.1125,
+            "Meera": 6.4368,
+            "Kabir": 7.6333
+          },
+          "explanations": {
+            "Aisha": "Primary taste match: directly reflects your favorites (0.75).",
+            "Rohan": "Selected to satisfy Aisha (0.75); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Aisha (0.75); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Selected to satisfy Aisha (0.75); your taste debt has been credited for upcoming stops."
+          }
+        },
+        {
+          "slot": "Riverside Plaza Taste Bridge",
+          "candidate_id": "EFDBCE58-E2FE-4BC3-BCED-21D3C4B3F09C",
+          "candidate_name": "Quinta da Regaleira",
+          "scores": {
+            "Aisha": 0.8833,
+            "Rohan": 0.5,
+            "Meera": 0.5395,
+            "Kabir": 0.6833
+          },
+          "cumulative": {
+            "Aisha": 8.7167,
+            "Rohan": 5.6125,
+            "Meera": 6.9763,
+            "Kabir": 8.3166
+          },
+          "explanations": {
+            "Aisha": "Primary taste match: directly reflects your favorites (0.88).",
+            "Rohan": "Selected to satisfy Aisha (0.88); your taste debt has been credited for upcoming stops.",
+            "Meera": "Selected to satisfy Aisha (0.88); your taste debt has been credited for upcoming stops.",
+            "Kabir": "Selected to satisfy Aisha (0.88); your taste debt has been credited for upcoming stops."
+          }
+        },
+        {
+          "slot": "Traditional Farewell Dinner",
+          "candidate_id": "A2F3ADB3-4596-4ED1-8C2A-295EC511B935",
+          "candidate_name": "São Miguel d'Alfama",
+          "scores": {
+            "Aisha": 0.55,
+            "Rohan": 0.3875,
+            "Meera": 0.5711,
+            "Kabir": 0.4167
+          },
+          "cumulative": {
+            "Aisha": 9.2667,
+            "Rohan": 6.0,
+            "Meera": 7.5474,
+            "Kabir": 8.7333
+          },
+          "explanations": {
+            "Aisha": "Selected to satisfy Meera (0.57); your taste debt has been credited for upcoming stops.",
+            "Rohan": "Selected to satisfy Meera (0.57); your taste debt has been credited for upcoming stops.",
+            "Meera": "Primary taste match: directly reflects your favorites (0.57).",
+            "Kabir": "Selected to satisfy Meera (0.57); your taste debt has been credited for upcoming stops."
+          }
+        }
+      ],
+      "per_person_fairness": {
+        "Aisha": 0.5633,
+        "Rohan": 0.54,
+        "Meera": 0.5883,
+        "Kabir": 0.5567
+      },
+      "fairness_score": 0.6334
+    }
+  }
+}
