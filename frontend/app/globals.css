@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #FAF9F6;
+  --foreground: #111110;
+  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom delicate viewport frame border (Auralis-style thin blue/violet border) */
+.viewport-frame {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  border: 1px solid rgba(92, 77, 242, 0.18);
+  z-index: 9999;
+}
+
+@media (min-width: 640px) {
+  .viewport-frame {
+    margin: 6px;
+    border-radius: 18px;
+    box-shadow: 0 0 0 1px rgba(92, 77, 242, 0.08);
+  }
+}
+
+/* Accessible focus ring for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #5C4DF2;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid #5C4DF2;
+  outline-offset: 2px;
+}
+
+/* Subtle micro-interactions & selection */
+::selection {
+  background-color: rgba(92, 77, 242, 0.15);
+  color: #111110;
+}
+
+/* Restrained custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 16, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 17, 16, 0.28);
+}
+
+/* Smooth restrained motion & reduced-motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
