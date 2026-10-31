@@ -34,6 +34,16 @@ class Candidate(BaseModel):
     latitude: Optional[float] = Field(default=None, description="Geographic latitude")
     longitude: Optional[float] = Field(default=None, description="Geographic longitude")
 
+    # --- Real Qloo metadata (populated from live API payloads) ---
+    primary_genre: Optional[str] = Field(default=None, description="Qloo primary genre tag ID, e.g. 'urn:tag:genre:place:museum'")
+    qloo_genres: List[str] = Field(default_factory=list, description="Qloo genre/category place tag IDs")
+    popularity: Optional[float] = Field(default=None, description="Qloo popularity (0-1)")
+    affinity_source: str = Field(default="unknown", description="Where qloo_affinity came from: 'qloo', 'mock_heuristic', or 'missing'")
+
+    # --- Per-traveler scores attached during planning ---
+    person_affinity: Dict[str, float] = Field(default_factory=dict, description="Real Qloo affinity per traveler (only travelers Qloo returned a value for)")
+    person_fit: Dict[str, float] = Field(default_factory=dict, description="Common Ground fit per traveler: percentile of their affinity within the venue's category")
+
 
 class ProfileConstraints(BaseModel):
     """Dietary, budget, and physical constraints for a traveler."""

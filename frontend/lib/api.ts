@@ -130,7 +130,8 @@ export function getSpreadScore(fairness?: any): string {
 export interface Plan {
   destination: string;
   trip_id: string;
-  stay: HotelStay;
+  /** null when Qloo returned no lodging that fits the group */
+  stay: HotelStay | null;
   days: ItineraryDay[];
   extras: PlanExtras;
   fairness: FairnessSummary;
@@ -141,6 +142,9 @@ export interface Plan {
   };
   under_the_hood: {
     qloo_calls: {
+      /** Measured by the backend for this plan run */
+      total_queries?: number;
+      cache_hits?: number;
       total: number;
       from_cache: number;
       cache_hit_rate: number;
@@ -634,6 +638,23 @@ export const api = {
     if (USE_MOCK) return { trip_id: "trip-demo-lisbon", message: "Mock demo trip created" };
     const res = await fetch(`${API_BASE_URL}/dev/demo-trip`, { method: "POST" });
     if (!res.ok) throw new Error("Demo trip creation failed");
+    return res.json();
+  },
+
+  /** Adds the 4 demo friends to an existing trip (skips names already on it) */
+  async addDemoProfiles(tripId: string): Promise<{ trip_id: string; added_count: number }> {
+    if (USE_MOCK) return { trip_id: tripId, added_count: 0 };
+    const res = await fetch(`${API_BASE_URL}/trips/${tripId}/demo-profiles`, { method: "POST" });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.detail) detail = String(body.detail);
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
     return res.json();
   },
 

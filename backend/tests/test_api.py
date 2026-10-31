@@ -167,8 +167,14 @@ def test_full_plan_lifecycle_and_rebalance(client):
     # Check stay & days
     assert plan["stay"]["category"] == "hotel"
     assert len(plan["days"]) == 2
+    # Each day has 6 template slots; a slot is skipped (and reported) rather than filled
+    # with a duplicate or wrong-category venue when the candidate pool runs out
+    scheduled = sum(len(d["slots"]) for d in plan["days"])
+    assert scheduled + len(plan["under_the_hood"]["skipped_slots"]) == 12
+    ids = [s["candidate_id"] for d in plan["days"] for s in d["slots"]]
+    assert len(ids) == len(set(ids))
     for d in plan["days"]:
-        assert len(d["slots"]) == 6
+        assert 1 <= len(d["slots"]) <= 6
         for s in d["slots"]:
             assert "time" in s
             assert "type" in s

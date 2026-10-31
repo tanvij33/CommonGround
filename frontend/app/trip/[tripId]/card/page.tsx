@@ -431,11 +431,13 @@ export default function TripCardPage() {
                     🏨 Recommended Lodging
                   </span>
                   <h4 className="text-base font-bold text-nearblack">
-                    {currentPlan.stay?.name || "Boutique Serviced Apartments"}
+                    {currentPlan.stay?.name || "No lodging found for this group"}
                   </h4>
-                  <p className="text-xs text-ink-500 font-mono">
-                    {currentPlan.stay?.price_level || "$$"} • {currentPlan.stay?.location || destination}
-                  </p>
+                  {currentPlan.stay && (
+                    <p className="text-xs text-ink-500 font-mono">
+                      {currentPlan.stay.price_level} • {currentPlan.stay.location}
+                    </p>
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-borderline/60 space-y-1 text-xs text-ink-600">

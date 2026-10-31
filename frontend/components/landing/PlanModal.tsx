@@ -160,6 +160,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose }) => {
           {plan && (
             <>
               {/* Hotel Stay Banner */}
+              {plan.stay && (
               <div className="p-5 rounded-3xl bg-subtle/80 border border-borderline/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -178,13 +179,14 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose }) => {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5 shrink-0">
-                  {plan.stay.tags.slice(0, 3).map((tag, i) => (
+                  {(plan.stay.tags || []).slice(0, 3).map((tag, i) => (
                     <Chip key={i} variant="outline" size="sm">
                       {tag}
                     </Chip>
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Group Fairness Metric Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -209,7 +211,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose }) => {
                 <div className="p-3.5 rounded-2xl bg-white border border-borderline/70">
                   <span className="text-[10px] font-mono text-ink-400 uppercase">Qloo Calls</span>
                   <p className="text-lg font-mono font-bold text-brand-cyan">
-                    {plan.under_the_hood?.qloo_calls?.total || 136} (100% cache)
+                    {plan.under_the_hood?.qloo_calls?.total_queries ?? plan.under_the_hood?.qloo_calls?.total ?? "—"}
                   </p>
                 </div>
               </div>

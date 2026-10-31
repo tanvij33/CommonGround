@@ -576,11 +576,51 @@ def compare_plans(id: str, db: Session = Depends(get_db)):
 # 6. Developer Demo Prefill Helper
 # =====================================================================
 
+def _add_demo_profiles(db: Session, trip_id: str) -> List[Dict[str, Any]]:
+    """Adds the 4 demo friends to an existing trip, skipping any name already on it. Caller commits."""
+    from backend.run_group_demo import get_demo_group
+
+    existing = {p.name.lower() for p in db.query(ProfileDB).filter_by(trip_id=trip_id).all()}
+    demo_profiles, favs_with_hints = get_demo_group()
+    added = []
+    for p in demo_profiles:
+        if p.name.lower() in existing:
+            continue
+        fav_list = [{"name": h[0], "type": h[1]} for h in favs_with_hints.get(p.name, [])]
+        prof_id = f"prof-{uuid.uuid4().hex[:8]}"
+        db.add(ProfileDB(
+            id=prof_id,
+            trip_id=trip_id,
+            name=p.name,
+            favorites_json=json.dumps(fav_list),
+            constraints_json=json.dumps(p.constraints.model_dump())
+        ))
+        added.append({
+            "id": prof_id,
+            "name": p.name,
+            "favorites": fav_list,
+            "constraints": p.constraints.model_dump()
+        })
+    return added
+
+
+@app.post("/trips/{id}/demo-profiles")
+def add_demo_profiles_to_trip(id: str, db: Session = Depends(get_db)):
+    """Adds the 4 demo friends (Aisha, Rohan, Meera, Kabir) to THIS trip. Idempotent per name."""
+    trip = db.query(TripDB).filter_by(id=id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail=f"Trip '{id}' not found")
+    if trip.status == "running":
+        raise HTTPException(status_code=409, detail="Cannot add travelers while the plan is being generated.")
+
+    added = _add_demo_profiles(db, id)
+    db.commit()
+    return {"trip_id": id, "added": added, "added_count": len(added)}
+
+
 @app.post("/dev/demo-trip")
 def create_demo_trip(db: Session = Depends(get_db)):
     """Creates a trip prefilled with the 4 demo friends (Aisha, Rohan, Meera, Kabir) for testing."""
-    from backend.run_group_demo import get_demo_group
-
     trip_id = f"trip-demo-{uuid.uuid4().hex[:6]}"
     trip = TripDB(
         id=trip_id,
@@ -591,29 +631,7 @@ def create_demo_trip(db: Session = Depends(get_db)):
         status="waiting"
     )
     db.add(trip)
-
-    demo_profiles, favs_with_hints = get_demo_group()
-    members_saved = []
-
-    for p in demo_profiles:
-        hints = favs_with_hints.get(p.name, [])
-        fav_list = [{"name": h[0], "type": h[1]} for h in hints]
-        prof_id = f"prof-{uuid.uuid4().hex[:6]}"
-        prof_db = ProfileDB(
-            id=prof_id,
-            trip_id=trip_id,
-            name=p.name,
-            favorites_json=json.dumps(fav_list),
-            constraints_json=json.dumps(p.constraints.model_dump())
-        )
-        db.add(prof_db)
-        members_saved.append({
-            "id": prof_id,
-            "name": p.name,
-            "favorites": fav_list,
-            "constraints": p.constraints.model_dump()
-        })
-
+    members_saved = _add_demo_profiles(db, trip_id)
     db.commit()
 
     return {

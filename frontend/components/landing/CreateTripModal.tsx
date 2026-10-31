@@ -261,42 +261,13 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({ isOpen, onClos
   const handleAddDemoFriends = async () => {
     if (!createdTrip) return;
     try {
-      const demoRes = await api.createDemoTrip();
-      const demoData = await api.getTrip(demoRes.trip_id);
-      setCreatedTrip({
-        ...createdTrip,
-        members: [...(createdTrip.members || []), ...demoData.members],
-      });
-      setToastMsg("4 demo friends added!");
-    } catch {
-      // Offline fallback
-      setCreatedTrip({
-        ...createdTrip,
-        members: [
-          ...(createdTrip.members || []),
-          {
-            name: "Aisha",
-            favorites: [{ name: "Burial", type: "artist" }, { name: "Aesop", type: "brand" }],
-            constraints: { budget: "$$", dietary: ["vegetarian"], pace: "moderate" },
-          },
-          {
-            name: "Rohan",
-            favorites: [{ name: "Metallica", type: "artist" }, { name: "Nike", type: "brand" }],
-            constraints: { budget: "$$$", pace: "intense" },
-          },
-          {
-            name: "Meera",
-            favorites: [{ name: "Norah Jones", type: "artist" }],
-            constraints: { budget: "$$", alcohol_free: true, pace: "relaxed" },
-          },
-          {
-            name: "Kabir",
-            favorites: [{ name: "Taylor Swift", type: "artist" }],
-            constraints: { budget: "$$", pace: "moderate" },
-          },
-        ],
-      });
-      setToastMsg("4 demo friends added in offline mode!");
+      // Demo friends are saved to THIS trip on the backend, then the roster is re-read from it
+      const res = await api.addDemoProfiles(createdTrip.id);
+      const updated = await api.getTrip(createdTrip.id);
+      setCreatedTrip(updated);
+      setToastMsg(res.added_count > 0 ? `${res.added_count} demo friends added to this trip!` : "Demo friends are already on this trip.");
+    } catch (err: any) {
+      setToastMsg(`Could not add demo friends: ${err?.message || "backend unavailable"}`);
     }
   };
 

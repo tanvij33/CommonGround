@@ -28,9 +28,16 @@ PRICE_SCALE: Dict[str, int] = {
 
 
 def score_candidate_for_profile(candidate: Candidate, profile: Profile) -> float:
-    """Computes a normalized affinity score (0.0 to 1.0) for a candidate given a profile."""
-    # If candidate already has a specific affinity assigned for this profile, use it
-    # Otherwise calculate dynamically from taste signals
+    """Returns a traveler's 0-1 fit score for a candidate.
+
+    During planning the pipeline attaches `person_fit` (derived from real Qloo affinity),
+    which is used whenever present. The keyword heuristic below is only reached for
+    offline/mock candidates that were never scored against Qloo.
+    """
+    fits = getattr(candidate, "person_fit", None)
+    if isinstance(fits, dict) and profile.name in fits:
+        return fits[profile.name]
+
     signals = [
         f.get("name", "") if isinstance(f, dict) else str(f)
         for f in profile.favorites

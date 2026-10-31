@@ -672,7 +672,7 @@ export default function TripPlanDetailedPage() {
                 <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 block">Qloo API Calls</span>
                   <p className="text-lg font-bold text-brand-cyan">
-                    {currentPlan.under_the_hood?.qloo_calls?.total || 136}
+                    {currentPlan.under_the_hood?.qloo_calls?.total_queries ?? currentPlan.under_the_hood?.qloo_calls?.total ?? "—"}
                   </p>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
