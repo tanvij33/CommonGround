@@ -32,7 +32,10 @@ from backend.models import (
     ProfileCreateInput,
     TripCreateInput,
     TripCreateResponse,
-    RebalanceInput
+    RebalanceInput,
+    PlaylistRequest,
+    GenerateRequest,
+    MusicPlaylist
 )
 from backend.db import init_db, get_db, SessionLocal, TripDB, ProfileDB, PlanDB
 from backend.pipeline import (
@@ -42,6 +45,7 @@ from backend.pipeline import (
 )
 from backend.qloo_client import (
     search_entity,
+    search_destinations,
     get_recommendations,
     resolve_favorite,
     is_type_match,
@@ -52,6 +56,7 @@ from backend.qloo_client import (
     QlooError
 )
 from backend.mock_data import MOCK_CITIES_DATA
+from backend.music import safe_build_playlist, validate_request, VIBES, MODE_LABELS
 
 # Initialize database tables & migrations on startup
 init_db()
@@ -79,6 +84,7 @@ app.add_middleware(
 
 # In-memory SSE progress broker
 progress_queues: Dict[str, List[asyncio.Queue]] = {}
+running_plans: set = set()  # trips with a generation run in this process; cleared on restart, so it can never stick
 latest_trip_progress: Dict[str, Dict[str, Any]] = {}
 
 
@@ -185,6 +191,19 @@ def search_cultural_entities_autocomplete(
         raise HTTPException(status_code=500, detail=f"Entity search error: {e}")
 
 
+@app.get("/destinations/search")
+@app.get("/api/destinations/search")
+def search_destinations_autocomplete(
+    q: str = Query(..., min_length=2, max_length=100, description="City, region, or country name"),
+    limit: int = Query(8, ge=1, le=10)
+):
+    """Qloo locality search for destination autocomplete. Returns 502 if Qloo is unavailable."""
+    try:
+        return search_destinations(q, limit=limit)
+    except QlooError as e:
+        raise HTTPException(status_code=502, detail=f"Destination search is unavailable: {e}")
+
+
 # =====================================================================
 # 3. Trip Creation & Member Profile Endpoints
 # =====================================================================
@@ -198,6 +217,7 @@ def create_trip(payload: TripCreateInput, db: Session = Depends(get_db)):
         title=payload.name.strip(),
         name=payload.name.strip(),
         destination=payload.destination.strip(),
+        destination_query=(payload.destination_query or "").strip() or None,
         days=payload.days,
         status="waiting"
     )
@@ -229,6 +249,7 @@ def get_trip_details(id: str, db: Session = Depends(get_db)):
         "id": trip.id,
         "name": trip.name or trip.title,
         "destination": trip.destination,
+        "destination_query": trip.destination_query,
         "days": trip.days or 2,
         "status": trip.status or "waiting",
         "created_at": trip.created_at.isoformat() if trip.created_at else None,
@@ -309,7 +330,14 @@ def add_profile_to_trip(
 # 4. Plan Generation & SSE Streaming
 # =====================================================================
 
-def _background_plan_runner(trip_id: str):
+def _background_plan_runner(trip_id: str, music_mode: str = "favourites", vibes: Optional[List[str]] = None):
+    try:
+        _run_plan_generation(trip_id, music_mode, vibes)
+    finally:
+        running_plans.discard(trip_id)
+
+
+def _run_plan_generation(trip_id: str, music_mode: str = "favourites", vibes: Optional[List[str]] = None):
     """Background task running generate_plan with timeout and error handling."""
     with SessionLocal() as db:
         trip = db.query(TripDB).filter_by(id=trip_id).first()
@@ -340,6 +368,7 @@ def _background_plan_runner(trip_id: str):
             id=trip.id,
             title=trip.title or trip.name or f"Trip to {trip.destination}",
             destination=trip.destination,
+            destination_query=trip.destination_query,
             days=trip.days or 2,
             members=profiles
         )
@@ -351,7 +380,8 @@ def _background_plan_runner(trip_id: str):
             plan_json_dict = generate_plan(
                 trip=trip_model,
                 profiles=profiles,
-                progress_callback=cb
+                progress_callback=cb,
+                config={"music_mode": music_mode, "vibes": vibes or []}
             )
 
             # Persist plan to SQLite
@@ -383,9 +413,18 @@ def _background_plan_runner(trip_id: str):
 def generate_trip_plan(
     id: str,
     background_tasks: BackgroundTasks,
+    payload: Optional[GenerateRequest] = None,
     db: Session = Depends(get_db)
 ):
-    """Runs generate_plan in a background task. Stream progress using SSE from GET /trips/{id}/progress."""
+    """Runs generate_plan in a background task. Stream progress using SSE from GET /trips/{id}/progress.
+
+    An optional body {music_mode, vibes} chooses how the trip playlist is built (default: favourites).
+    """
+    music_mode = payload.music_mode if payload else "favourites"
+    try:
+        music_vibes = validate_request(music_mode, payload.vibes if payload else [])
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     trip = db.query(TripDB).filter_by(id=id).first()
     if not trip:
         raise HTTPException(status_code=404, detail=f"Trip '{id}' not found")
@@ -397,11 +436,20 @@ def generate_trip_plan(
             detail="Cannot generate plan: No friends have joined this trip yet. Add at least one profile first via POST /trips/{id}/profiles."
         )
 
+    if id in running_plans:
+        return {
+            "status": "started",
+            "trip_id": id,
+            "message": "Plan generation is already running for this trip.",
+            "progress_url": f"/trips/{id}/progress"
+        }
+    running_plans.add(id)
+
     trip.status = "running"
     db.commit()
 
     update_trip_progress(id, "Initializing cultural intelligence pipeline...", 5, "running")
-    background_tasks.add_task(_background_plan_runner, id)
+    background_tasks.add_task(_background_plan_runner, id, music_mode, music_vibes)
 
     return {
         "status": "started",
@@ -421,9 +469,13 @@ async def stream_trip_progress(id: str, db: Session = Depends(get_db)):
     # If trip is already completed or failed, return immediate event
     if trip.status in ("done", "failed"):
         async def immediate_gen():
-            msg = "Plan generation finished" if trip.status == "done" else "Plan generation failed"
-            pct = 100 if trip.status == "done" else 0
-            yield f"data: {json.dumps({'message': msg, 'percent': pct, 'status': trip.status})}\n\n"
+            last = latest_trip_progress.get(id)
+            if last and last.get("status") == trip.status:
+                yield f"data: {json.dumps(last)}\n\n"  # keeps the real failure reason while this process is alive
+            else:
+                msg = "Plan generation finished" if trip.status == "done" else "Plan generation failed"
+                pct = 100 if trip.status == "done" else 0
+                yield f"data: {json.dumps({'message': msg, 'percent': pct, 'status': trip.status})}\n\n"
         return StreamingResponse(immediate_gen(), media_type="text/event-stream")
 
     queue = asyncio.Queue()
@@ -474,6 +526,46 @@ def get_trip_plan(id: str, db: Session = Depends(get_db)):
 # =====================================================================
 # 5. Plan Rebalancing & Plain-LLM Comparison
 # =====================================================================
+
+@app.get("/music/options")
+def music_options():
+    """The three playlist modes and the selectable vibes."""
+    return {
+        "modes": [{"id": k, "label": v} for k, v in MODE_LABELS.items()],
+        "vibes": [{"id": k, "label": v["label"]} for k, v in VIBES.items()],
+    }
+
+
+@app.post("/trips/{id}/playlist", response_model=MusicPlaylist)
+def build_trip_playlist(id: str, payload: PlaylistRequest, db: Session = Depends(get_db)):
+    """(Re)builds the trip's playlist in one of three modes (vibes, favourites, local) and saves it
+    into the stored plan. Service problems come back as status 'unavailable', not as errors."""
+    trip = db.query(TripDB).filter_by(id=id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail=f"Trip '{id}' not found")
+    plan_db = db.query(PlanDB).filter_by(trip_id=id).first()
+    if not plan_db:
+        raise HTTPException(status_code=404, detail=f"Plan has not been generated yet for trip '{id}'.")
+    try:
+        vibes = validate_request(payload.mode, payload.vibes)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    profiles = [
+        Profile(id=p.id, name=p.name, favorites=p.favorites, constraints=ProfileConstraints(**p.constraints))
+        for p in db.query(ProfileDB).filter_by(trip_id=id).all()
+    ]
+    playlist = safe_build_playlist(
+        payload.mode, profiles, trip.destination,
+        destination_query=trip.destination_query, vibes=vibes, size=payload.size
+    )
+
+    plan = json.loads(plan_db.plan_json)
+    plan.setdefault("extras", {})["music"] = playlist
+    plan_db.plan_json = json.dumps(plan)
+    db.commit()
+    return playlist
+
 
 @app.post("/trips/{id}/rebalance")
 def rebalance_trip_plan(
@@ -561,11 +653,51 @@ def compare_plans(id: str, db: Session = Depends(get_db)):
 # 6. Developer Demo Prefill Helper
 # =====================================================================
 
+def _add_demo_profiles(db: Session, trip_id: str) -> List[Dict[str, Any]]:
+    """Adds the 4 demo friends to an existing trip, skipping any name already on it. Caller commits."""
+    from backend.run_group_demo import get_demo_group
+
+    existing = {p.name.lower() for p in db.query(ProfileDB).filter_by(trip_id=trip_id).all()}
+    demo_profiles, favs_with_hints = get_demo_group()
+    added = []
+    for p in demo_profiles:
+        if p.name.lower() in existing:
+            continue
+        fav_list = [{"name": h[0], "type": h[1]} for h in favs_with_hints.get(p.name, [])]
+        prof_id = f"prof-{uuid.uuid4().hex[:8]}"
+        db.add(ProfileDB(
+            id=prof_id,
+            trip_id=trip_id,
+            name=p.name,
+            favorites_json=json.dumps(fav_list),
+            constraints_json=json.dumps(p.constraints.model_dump())
+        ))
+        added.append({
+            "id": prof_id,
+            "name": p.name,
+            "favorites": fav_list,
+            "constraints": p.constraints.model_dump()
+        })
+    return added
+
+
+@app.post("/trips/{id}/demo-profiles")
+def add_demo_profiles_to_trip(id: str, db: Session = Depends(get_db)):
+    """Adds the 4 demo friends (Aisha, Rohan, Meera, Kabir) to THIS trip. Idempotent per name."""
+    trip = db.query(TripDB).filter_by(id=id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail=f"Trip '{id}' not found")
+    if trip.status == "running":
+        raise HTTPException(status_code=409, detail="Cannot add travelers while the plan is being generated.")
+
+    added = _add_demo_profiles(db, id)
+    db.commit()
+    return {"trip_id": id, "added": added, "added_count": len(added)}
+
+
 @app.post("/dev/demo-trip")
 def create_demo_trip(db: Session = Depends(get_db)):
     """Creates a trip prefilled with the 4 demo friends (Aisha, Rohan, Meera, Kabir) for testing."""
-    from backend.run_group_demo import get_demo_group
-
     trip_id = f"trip-demo-{uuid.uuid4().hex[:6]}"
     trip = TripDB(
         id=trip_id,
@@ -576,29 +708,7 @@ def create_demo_trip(db: Session = Depends(get_db)):
         status="waiting"
     )
     db.add(trip)
-
-    demo_profiles, favs_with_hints = get_demo_group()
-    members_saved = []
-
-    for p in demo_profiles:
-        hints = favs_with_hints.get(p.name, [])
-        fav_list = [{"name": h[0], "type": h[1]} for h in hints]
-        prof_id = f"prof-{uuid.uuid4().hex[:6]}"
-        prof_db = ProfileDB(
-            id=prof_id,
-            trip_id=trip_id,
-            name=p.name,
-            favorites_json=json.dumps(fav_list),
-            constraints_json=json.dumps(p.constraints.model_dump())
-        )
-        db.add(prof_db)
-        members_saved.append({
-            "id": prof_id,
-            "name": p.name,
-            "favorites": fav_list,
-            "constraints": p.constraints.model_dump()
-        })
-
+    members_saved = _add_demo_profiles(db, trip_id)
     db.commit()
 
     return {

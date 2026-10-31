@@ -7,7 +7,7 @@ These models define the shape of data used throughout the app:
 - Plan: A generated itinerary balancing taste fairness across all members.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -28,11 +28,22 @@ class Candidate(BaseModel):
     )
     tags: List[str] = Field(default_factory=list, description="Descriptive taste tags (e.g. ['specialty-coffee', 'minimalist'])")
     price_level: Optional[str] = Field(default="$$", description="Estimated price bracket: $, $$, $$$, $$$$")
+    price_verified: bool = Field(default=True, description="False when Qloo gave no price and price_level is only a neutral placeholder")
     description: Optional[str] = Field(default=None, description="Short editorial summary of the venue")
     address: Optional[str] = Field(default=None, description="Physical street address")
     image_url: Optional[str] = Field(default=None, description="Cover image or thumbnail URL")
     latitude: Optional[float] = Field(default=None, description="Geographic latitude")
     longitude: Optional[float] = Field(default=None, description="Geographic longitude")
+
+    # --- Real Qloo metadata (populated from live API payloads) ---
+    primary_genre: Optional[str] = Field(default=None, description="Qloo primary genre tag ID, e.g. 'urn:tag:genre:place:museum'")
+    qloo_genres: List[str] = Field(default_factory=list, description="Qloo genre/category place tag IDs")
+    popularity: Optional[float] = Field(default=None, description="Qloo popularity (0-1)")
+    affinity_source: str = Field(default="unknown", description="Where qloo_affinity came from: 'qloo', 'mock_heuristic', or 'missing'")
+
+    # --- Per-traveler scores attached during planning ---
+    person_affinity: Dict[str, float] = Field(default_factory=dict, description="Real Qloo affinity per traveler (only travelers Qloo returned a value for)")
+    person_fit: Dict[str, float] = Field(default_factory=dict, description="Common Ground fit per traveler: percentile of their affinity within the venue's category")
 
 
 class ProfileConstraints(BaseModel):
@@ -96,6 +107,11 @@ class TripCreateInput(BaseModel):
     """Payload to initialize a new group trip."""
     name: str = Field(..., min_length=1)
     destination: str = Field(..., min_length=1)
+    destination_query: Optional[str] = Field(
+        default=None,
+        max_length=300,
+        description="Precise Qloo location string from destination search (e.g. 'Porto, Porto, Portugal')"
+    )
     days: int = Field(default=2, ge=1, le=14)
 
 
@@ -188,3 +204,84 @@ class Plan(BaseModel):
     )
     created_at: Optional[str] = Field(default=None, description="Timestamp when plan was generated")
 
+
+
+# =====================================================================
+# Music recommendations (three-mode group playlist)
+# =====================================================================
+
+MusicMode = Literal["vibes", "favourites", "local"]
+
+
+class MusicLink(BaseModel):
+    """A listening link built from verified IDs (Qloo external IDs or catalogue records)."""
+    label: str
+    url: str
+    kind: str = Field(description="'artist' or 'track'")
+
+
+class MusicTrack(BaseModel):
+    """A track confirmed to exist in the music catalogue under the recommended artist."""
+    title: str
+    album: Optional[str] = None
+    artwork_url: Optional[str] = None
+    preview_url: Optional[str] = Field(default=None, description="Short audio preview from the catalogue")
+    listen_url: str
+    provider: str = Field(description="Catalogue provider, e.g. 'apple_music'")
+    basis: str = Field(description="'qloo_notable_song' (title taken from Qloo) or 'catalog_listing' (first catalogue track by this artist)")
+
+
+class MusicScores(BaseModel):
+    """Scores for one recommended artist. API-provided and calculated values are kept apart."""
+    # --- Provided by the Qloo API ---
+    qloo_affinity: Optional[float] = Field(default=None, description="Qloo affinity for this request's signals (API)")
+    qloo_popularity: Optional[float] = Field(default=None, description="Qloo popularity 0-1 (API)")
+    qloo_affinity_by_member: Dict[str, float] = Field(default_factory=dict, description="Qloo affinity per member's favourites (API)")
+    # --- Calculated by Common Ground ---
+    group_fit: Optional[float] = Field(default=None, description="Common Ground group-fit score 0-1 (calculated)")
+    group_fit_basis: str = Field(default="", description="How group_fit was calculated")
+    member_fit: Dict[str, float] = Field(default_factory=dict, description="Per-member fit 0-1 (calculated)")
+    fit_unknown_members: List[str] = Field(default_factory=list, description="Members Qloo returned no affinity for; counted as neutral in group_fit, not shown as scores")
+
+
+class MusicEntry(BaseModel):
+    """One recommended artist (and a verified track when the catalogue confirms one)."""
+    artist: str
+    qloo_id: str
+    role: str = Field(description="vibes: 'vibe_match'|'vibe_pick'; favourites: 'spotlight'|'shared'|'discovery'; local: 'local'")
+    genres: List[str] = Field(default_factory=list)
+    image_url: Optional[str] = None
+    known_for: List[str] = Field(default_factory=list, description="Notable song titles as reported by Qloo (not verified as playable)")
+    track: Optional[MusicTrack] = None
+    links: List[MusicLink] = Field(default_factory=list)
+    scores: MusicScores = Field(default_factory=MusicScores)
+    why: str
+    vibes: List[str] = Field(default_factory=list)
+    local_evidence: Optional[str] = Field(default=None, description="'born_in_city'|'born_in_country'|'local_genre'|'popular_here'")
+
+
+class MusicPlaylist(BaseModel):
+    """A mode-specific group playlist, or an explanation of why none could be built."""
+    mode: MusicMode
+    mode_label: str
+    status: Literal["ok", "sparse", "empty", "unavailable"]
+    message: Optional[str] = None
+    selection: Dict[str, Any] = Field(default_factory=dict, description="What the playlist was built from (vibes, destination)")
+    entries: List[MusicEntry] = Field(default_factory=list)
+    summary: Dict[str, Any] = Field(default_factory=dict)
+    sources: Dict[str, str] = Field(default_factory=dict, description="Which values come from Qloo and which are calculated")
+    catalog: Dict[str, Any] = Field(default_factory=dict)
+    generated_at: Optional[str] = None
+
+
+class PlaylistRequest(BaseModel):
+    """Payload to (re)build a trip's playlist in one of the three modes."""
+    mode: MusicMode = "favourites"
+    vibes: List[str] = Field(default_factory=list, max_length=4)
+    size: int = Field(default=12, ge=6, le=20)
+
+
+class GenerateRequest(BaseModel):
+    """Optional payload for plan generation."""
+    music_mode: MusicMode = "favourites"
+    vibes: List[str] = Field(default_factory=list, max_length=4)

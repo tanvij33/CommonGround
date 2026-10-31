@@ -48,6 +48,7 @@ class TripDB(Base):
     title = Column(String, nullable=False)
     name = Column(String, nullable=True)
     destination = Column(String, nullable=False, index=True)
+    destination_query = Column(String, nullable=True)  # Precise Qloo location string used for venue lookups
     days = Column(Integer, default=2)
     status = Column(String, default="waiting")  # waiting, running, done, failed
     start_date = Column(String, nullable=True)
@@ -128,7 +129,8 @@ def init_db():
             for col_name, col_def in [
                 ("name", "TEXT"),
                 ("days", "INTEGER DEFAULT 2"),
-                ("status", "TEXT DEFAULT 'waiting'")
+                ("status", "TEXT DEFAULT 'waiting'"),
+                ("destination_query", "TEXT")
             ]:
                 try:
                     conn.execute(text(f"ALTER TABLE trips ADD COLUMN {col_name} {col_def}"))

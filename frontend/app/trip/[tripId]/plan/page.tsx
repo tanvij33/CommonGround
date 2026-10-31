@@ -12,10 +12,12 @@ import { Toast } from "@/components/ui/Toast";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import { AppWindow } from "@/components/ui/AppWindow";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { MusicPlaylistPanel } from "@/components/music/MusicPlaylistPanel";
 import {
   api,
   Plan,
   SAMPLE_PLAN,
+  USE_MOCK,
   getFairnessScore,
   getMeanScore,
   getSpreadScore,
@@ -85,8 +87,18 @@ export default function TripPlanDetailedPage() {
       })
       .catch((err) => {
         if (isMounted) {
-          // Use sample plan fallback so user always sees the verified itinerary
-          setPlan(SAMPLE_PLAN);
+          if (USE_MOCK) {
+            // Frontend mock mode has no backend, so the static sample is the intended content
+            setPlan(SAMPLE_PLAN);
+          } else {
+            // Never show a different city's sample plan for a trip whose plan could not be loaded
+            const raw: string = err?.message || "The plan could not be loaded.";
+            setErrorMsg(
+              /has not been generated/i.test(raw)
+                ? "This trip doesn't have an itinerary yet. Generate it to see your plan."
+                : raw
+            );
+          }
           setLoading(false);
         }
       });
@@ -168,6 +180,30 @@ export default function TripPlanDetailedPage() {
             <Skeleton variant="card" className="h-60" />
             <Skeleton variant="card" className="h-60" />
           </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!plan && errorMsg) {
+    return (
+      <div className="min-h-screen bg-offwhite flex flex-col">
+        <Navbar />
+        <main className="flex-1 max-w-xl mx-auto w-full p-4 sm:p-8 flex items-center">
+          <Card variant="default" padding="lg" className="w-full space-y-4 text-center">
+            <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+            <h2 className="text-lg font-bold text-nearblack tracking-tight">No itinerary to show yet</h2>
+            <p className="text-sm text-ink-500 leading-relaxed" role="alert">{errorMsg}</p>
+            <div className="flex flex-wrap justify-center gap-3 pt-1">
+              <Button variant="primary" size="sm" onClick={() => router.push(`/trip/${tripId}/generating`)}>
+                Generate again
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.push("/")}>
+                Back home
+              </Button>
+            </div>
+          </Card>
         </main>
         <Footer />
       </div>
@@ -432,14 +468,14 @@ export default function TripPlanDetailedPage() {
           </div>
         </div>
 
-        {/* 4. Extras Row (Shopping, Hidden Gem, Wildcard, Playlist) */}
-        {currentPlan.extras && (
+        {/* 4. Extras Row (Shopping, Hidden Gem, Wildcard) */}
+        {(currentPlan.extras?.shopping || currentPlan.extras?.hidden_gem || currentPlan.extras?.wildcard) && (
           <div className="space-y-4">
             <h3 className="text-base sm:text-lg font-bold text-nearblack tracking-tight">
-              Curated Extras & Group Soundtrack
+              Curated Extras
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Shopping */}
               {currentPlan.extras.shopping && (
                 <Card variant="default" padding="md" className="space-y-2">
@@ -496,28 +532,21 @@ export default function TripPlanDetailedPage() {
                   </span>
                 </Card>
               )}
-
-              {/* Playlist Feature Card */}
-              {currentPlan.extras.playlist && currentPlan.extras.playlist[0] && (
-                <Card variant="default" padding="md" className="space-y-2 bg-gradient-to-br from-indigo-50/50 to-white">
-                  <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-brand-violet">
-                    <Music className="w-3.5 h-3.5" />
-                    <span>GROUP SOUNDTRACK</span>
-                  </div>
-                  <h4 className="text-sm font-bold text-nearblack line-clamp-1">
-                    "{currentPlan.extras.playlist[0].title}"
-                  </h4>
-                  <p className="text-[11px] text-ink-500 line-clamp-2">
-                    {currentPlan.extras.playlist[0].artist} — {currentPlan.extras.playlist[0].note}
-                  </p>
-                  <span className="text-[10px] font-mono text-brand-violet block pt-1 font-semibold">
-                    +{currentPlan.extras.playlist.length - 1} more tracks below
-                  </span>
-                </Card>
-              )}
             </div>
           </div>
         )}
+
+        {/* 4b. Group soundtrack: Vibes / Favourites / Local music */}
+        <MusicPlaylistPanel
+          tripId={tripId}
+          music={currentPlan.extras?.music}
+          onChange={(music) =>
+            setPlan((prev) => {
+              const base = prev || currentPlan;
+              return { ...base, extras: { ...base.extras, music } };
+            })
+          }
+        />
 
         {/* 5. Fairness Dashboard in Floating Window over Bright Gradient */}
         <div className="rounded-4xl bg-white border border-borderline shadow-float p-3 sm:p-5 overflow-hidden">
@@ -672,7 +701,7 @@ export default function TripPlanDetailedPage() {
                 <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 block">Qloo API Calls</span>
                   <p className="text-lg font-bold text-brand-cyan">
-                    {currentPlan.under_the_hood?.qloo_calls?.total || 136}
+                    {currentPlan.under_the_hood?.qloo_calls?.total_queries ?? currentPlan.under_the_hood?.qloo_calls?.total ?? "—"}
                   </p>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">

@@ -42,14 +42,16 @@ export default function GeneratingPlanPage() {
   useEffect(() => {
     let isMounted = true;
     let timer: NodeJS.Timeout;
+    let unsubscribe: (() => void) | undefined;
 
     const startGenerationAndListen = async () => {
       try {
-        // Trigger background plan generation
-        await api.generatePlan(tripId).catch(() => {});
+        // Trigger background plan generation; a refusal (for example no travelers yet) is shown, not swallowed
+        await api.generatePlan(tripId);
+        if (!isMounted) return; // effect was cleaned up while the request was in flight (React StrictMode)
 
         // Subscribe to live SSE progress stream
-        const unsubscribe = api.subscribeProgress(
+        unsubscribe = api.subscribeProgress(
           tripId,
           (payload: ProgressEventPayload) => {
             if (!isMounted) return;
@@ -76,37 +78,13 @@ export default function GeneratingPlanPage() {
               setErrorMessage(payload.message);
             }
           },
-          (err) => {
-            // Offline/Network fallback simulation so user can experience full flow
+          () => {
+            // Never fake progress or jump to a plan page: tell the user the connection was lost
             if (!isMounted) return;
-            let currentPct = 15;
-            const fallbackInterval = setInterval(() => {
-              if (!isMounted) {
-                clearInterval(fallbackInterval);
-                return;
-              }
-              currentPct += 18;
-              if (currentPct >= 100) {
-                clearInterval(fallbackInterval);
-                setPercent(100);
-                setStatusMessage("Plan ready!");
-                setTimeout(() => router.push(`/trip/${tripId}/plan`), 1000);
-              } else {
-                setPercent(currentPct);
-                const stageIdx = Math.min(
-                  plannedStages.length - 1,
-                  Math.floor((currentPct / 100) * plannedStages.length)
-                );
-                setCurrentStepIndex(stageIdx);
-                setStatusMessage(plannedStages[stageIdx].label);
-              }
-            }, 800);
+            setIsFailed(true);
+            setErrorMessage("Lost the connection to the server while planning. Check that the backend is running, then retry.");
           }
         );
-
-        return () => {
-          unsubscribe();
-        };
       } catch (err: any) {
         if (!isMounted) return;
         setIsFailed(true);
@@ -119,6 +97,7 @@ export default function GeneratingPlanPage() {
     return () => {
       isMounted = false;
       if (timer) clearTimeout(timer);
+      unsubscribe?.(); // close the event stream on unmount or retry
     };
   }, [tripId, router]);
 
@@ -127,7 +106,8 @@ export default function GeneratingPlanPage() {
     setErrorMessage(null);
     setPercent(10);
     setCurrentStepIndex(0);
-    router.refresh();
+    // router.refresh() does not re-run the effect that starts generation; a reload does
+    window.location.reload();
   };
 
   return (
@@ -228,7 +208,7 @@ export default function GeneratingPlanPage() {
                     size="sm"
                     onClick={() => router.push(`/trip/${tripId}`)}
                   >
-                    View Cached Plan
+                    Open plan page
                   </Button>
                 </div>
               </div>

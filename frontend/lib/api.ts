@@ -30,6 +30,7 @@ export interface Trip {
   id: string;
   name: string;
   destination: string;
+  destination_query?: string | null;
   days: number;
   status: "waiting" | "running" | "done" | "failed";
   created_at?: string;
@@ -72,17 +73,89 @@ export interface HotelStay {
   image_url?: string;
 }
 
-export interface PlaylistTrack {
+export type MusicMode = "vibes" | "favourites" | "local";
+
+export const MUSIC_MODES: { id: MusicMode; label: string; blurb: string }[] = [
+  { id: "vibes", label: "Vibes", blurb: "Pick the moods you want the trip to sound like" },
+  { id: "favourites", label: "Favourites", blurb: "Balanced from everyone's favourite artists" },
+  { id: "local", label: "Local music", blurb: "Artists tied to where you're going" },
+];
+
+// Mirrors the backend VIBES table (GET /music/options); the backend rejects unknown ids.
+export const MUSIC_VIBES: { id: string; label: string }[] = [
+  { id: "chill", label: "Chill" },
+  { id: "energetic", label: "Energetic" },
+  { id: "romantic", label: "Romantic" },
+  { id: "adventurous", label: "Adventurous" },
+  { id: "nostalgic", label: "Nostalgic" },
+  { id: "party", label: "Party" },
+  { id: "indie", label: "Indie" },
+  { id: "cultural", label: "Cultural exploration" },
+];
+
+export interface MusicLink {
+  label: string;
+  url: string;
+  kind: "artist" | "track" | string;
+}
+
+export interface MusicTrack {
   title: string;
+  album?: string | null;
+  artwork_url?: string | null;
+  preview_url?: string | null;
+  listen_url: string;
+  provider: string;
+  /** "qloo_notable_song": title came from Qloo; "catalog_listing": first catalogue track by this artist */
+  basis: "qloo_notable_song" | "catalog_listing" | string;
+}
+
+export interface MusicScores {
+  // Provided by the Qloo API
+  qloo_affinity?: number | null;
+  qloo_popularity?: number | null;
+  qloo_affinity_by_member: Record<string, number>;
+  // Calculated by Common Ground
+  group_fit?: number | null;
+  group_fit_basis: string;
+  member_fit: Record<string, number>;
+  fit_unknown_members: string[];
+}
+
+export interface MusicEntry {
   artist: string;
-  note: string;
+  qloo_id: string;
+  role: "vibe_match" | "vibe_pick" | "spotlight" | "shared" | "discovery" | "local" | string;
+  genres: string[];
+  image_url?: string | null;
+  known_for: string[];
+  track?: MusicTrack | null;
+  links: MusicLink[];
+  scores: MusicScores;
+  why: string;
+  vibes: string[];
+  local_evidence?: "born_in_city" | "born_in_country" | "local_genre" | "popular_here" | null;
+}
+
+export interface MusicPlaylist {
+  mode: MusicMode;
+  mode_label: string;
+  status: "ok" | "sparse" | "empty" | "unavailable";
+  message?: string | null;
+  selection: { vibes?: string[]; vibe_labels?: string[]; destination?: string; country?: string | null; members?: string[] };
+  entries: MusicEntry[];
+  summary: Record<string, any>;
+  sources: Record<string, string>;
+  catalog: { provider?: string; status?: string; verified_tracks?: number; artists_checked?: number };
+  generated_at?: string | null;
 }
 
 export interface PlanExtras {
   shopping?: any;
   hidden_gem?: any;
   wildcard?: any;
-  playlist: PlaylistTrack[];
+  /** Absent on plans saved before the music engine existed */
+  music?: MusicPlaylist;
 }
 
 export interface FairnessSummary {
@@ -129,7 +202,8 @@ export function getSpreadScore(fairness?: any): string {
 export interface Plan {
   destination: string;
   trip_id: string;
-  stay: HotelStay;
+  /** null when Qloo returned no lodging that fits the group */
+  stay: HotelStay | null;
   days: ItineraryDay[];
   extras: PlanExtras;
   fairness: FairnessSummary;
@@ -140,6 +214,9 @@ export interface Plan {
   };
   under_the_hood: {
     qloo_calls: {
+      /** Measured by the backend for this plan run */
+      total_queries?: number;
+      cache_hits?: number;
       total: number;
       from_cache: number;
       cache_hit_rate: number;
@@ -161,6 +238,18 @@ export interface AutocompleteEntity {
   category?: string;
   subtitle?: string;
   image?: string | null;
+}
+
+/** A real locality returned by Qloo destination search. */
+export interface DestinationResult {
+  id: string;
+  name: string;
+  /** Full disambiguated label, e.g. "Porto, Porto, Portugal" */
+  label: string;
+  /** Precise location string the backend sends to Qloo when planning */
+  query: string;
+  country?: string | null;
+  description?: string | null;
 }
 
 export interface ComparisonResult {
@@ -344,28 +433,6 @@ export const SAMPLE_PLAN: Plan = {
       description: "Hillside terrace garden and popular viewpoint offering panoramic Tagus River sunset vistas and relaxed local vibe.",
       qloo_affinity: 0.58,
     },
-    playlist: [
-      {
-        title: "Archangel",
-        artist: "Burial",
-        note: "Atmospheric evening beats aligning with Aisha & Rohan's darker sonic sensibilities.",
-      },
-      {
-        title: "Holocene",
-        artist: "Bon Iver",
-        note: "Warm acoustic bridge for Meera & Kabir wandering through Alfama alleys.",
-      },
-      {
-        title: "Karma Police",
-        artist: "Radiohead",
-        note: "Cross-generational alternative anthem uniting the entire group on the drive.",
-      },
-      {
-        title: "Levitating",
-        artist: "Dua Lipa",
-        note: "High-energy sunset track celebrating the final Lisbon waterfront gathering.",
-      },
-    ],
   },
   fairness: {
     fairness_score: 0.633,
@@ -416,7 +483,7 @@ export const api = {
   },
 
   /** Creates a new group trip */
-  async createTrip(data: { name: string; destination: string; days: number }): Promise<{ id: string; invite_url: string }> {
+  async createTrip(data: { name: string; destination: string; destination_query?: string; days: number }): Promise<{ id: string; invite_url: string }> {
     if (USE_MOCK) {
       return { id: "trip-mock-1234", invite_url: "http://localhost:3000/trips/trip-mock-1234/join" };
     }
@@ -517,6 +584,34 @@ export const api = {
     return curatedMatches;
   },
 
+  /** Searches real destinations (Qloo localities). Throws on network/API errors so callers can show them. */
+  async searchDestinations(query: string, signal?: AbortSignal): Promise<DestinationResult[]> {
+    const cleanQuery = (query || "").trim();
+    if (cleanQuery.length < 2) return [];
+
+    if (USE_MOCK) {
+      // Frontend mock mode has no backend; only the offline catalog cities can be planned
+      return ["Lisbon", "Tokyo", "Delhi"]
+        .filter((c) => c.toLowerCase().includes(cleanQuery.toLowerCase()))
+        .map((c) => ({ id: `mock-${c.toLowerCase()}`, name: c, label: `${c} (offline catalog)`, query: c }));
+    }
+
+    const url = new URL(`${API_BASE_URL}/destinations/search`);
+    url.searchParams.set("q", cleanQuery);
+    const res = await fetch(url.toString(), { signal });
+    if (!res.ok) {
+      let detail = `Destination search failed (HTTP ${res.status})`;
+      try {
+        const body = await res.json();
+        if (body?.detail) detail = String(body.detail).split("\n")[0];
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
+    return res.json();
+  },
+
   /** Adds a traveler profile to a trip */
   async addProfile(tripId: string, profile: TravelerProfile): Promise<any> {
     if (USE_MOCK) return { profile_id: "prof-mock", ...profile };
@@ -535,7 +630,16 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/trips/${tripId}/generate`, {
       method: "POST",
     });
-    if (!res.ok) throw new Error("Failed to start generation");
+    if (!res.ok) {
+      let detail = "Failed to start generation";
+      try {
+        const body = await res.json();
+        if (typeof body?.detail === "string") detail = body.detail;
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
     return res.json();
   },
 
@@ -543,7 +647,17 @@ export const api = {
   async getPlan(tripId: string): Promise<Plan> {
     if (USE_MOCK) return SAMPLE_PLAN;
     const res = await fetch(`${API_BASE_URL}/trips/${tripId}/plan`);
-    if (!res.ok) throw new Error("Plan not ready or not found");
+    if (res.status === 202) throw new Error("The plan is still being generated.");
+    if (!res.ok) {
+      let detail = "Plan not ready or not found";
+      try {
+        const body = await res.json();
+        if (typeof body?.detail === "string") detail = body.detail;
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
     return res.json();
   },
 
@@ -593,6 +707,67 @@ export const api = {
     if (USE_MOCK) return { trip_id: "trip-demo-lisbon", message: "Mock demo trip created" };
     const res = await fetch(`${API_BASE_URL}/dev/demo-trip`, { method: "POST" });
     if (!res.ok) throw new Error("Demo trip creation failed");
+    return res.json();
+  },
+
+  /** Adds the 4 demo friends to an existing trip (skips names already on it) */
+  async addDemoProfiles(tripId: string): Promise<{ trip_id: string; added_count: number }> {
+    if (USE_MOCK) return { trip_id: tripId, added_count: 0 };
+    const res = await fetch(`${API_BASE_URL}/trips/${tripId}/demo-profiles`, { method: "POST" });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.detail) detail = String(body.detail);
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
+    return res.json();
+  },
+
+  /** Builds (or rebuilds) the trip playlist in one of the three modes. Service problems come back as
+   *  a playlist with status "unavailable"; only transport failures and bad input throw. */
+  async buildPlaylist(
+    tripId: string,
+    request: { mode: MusicMode; vibes?: string[]; size?: number }
+  ): Promise<MusicPlaylist> {
+    if (USE_MOCK) {
+      return {
+        mode: request.mode,
+        mode_label: MUSIC_MODES.find((m) => m.id === request.mode)?.label ?? request.mode,
+        status: "unavailable",
+        message: "Music recommendations need the live backend; frontend mock mode has no Qloo data.",
+        selection: {},
+        entries: [],
+        summary: {},
+        sources: {},
+        catalog: {},
+      };
+    }
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}/trips/${tripId}/playlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+    } catch {
+      // fetch only throws on transport failure; "Failed to fetch" tells the user nothing
+      throw new Error("Couldn't reach the server. Check that the backend is running, then try again.");
+    }
+    if (!res.ok) {
+      let detail = `Playlist request failed (HTTP ${res.status})`;
+      try {
+        const body = await res.json();
+        if (typeof body?.detail === "string") detail = body.detail;
+        else if (Array.isArray(body?.detail)) detail = body.detail.map((d: any) => d.msg).join("; ");
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
     return res.json();
   },
 

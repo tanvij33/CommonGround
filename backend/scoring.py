@@ -27,10 +27,25 @@ PRICE_SCALE: Dict[str, int] = {
 }
 
 
+def group_budget_level(profiles: List[Profile]) -> Optional[int]:
+    """The group's price ceiling (1-4): its lowest member budget, or None when nobody set a limit."""
+    levels = [PRICE_SCALE[p.constraints.budget] for p in profiles
+              if p.constraints and p.constraints.budget in PRICE_SCALE]
+    ceiling = min(levels) if levels else None
+    return ceiling if ceiling is not None and ceiling < max(PRICE_SCALE.values()) else None
+
+
 def score_candidate_for_profile(candidate: Candidate, profile: Profile) -> float:
-    """Computes a normalized affinity score (0.0 to 1.0) for a candidate given a profile."""
-    # If candidate already has a specific affinity assigned for this profile, use it
-    # Otherwise calculate dynamically from taste signals
+    """Returns a traveler's 0-1 fit score for a candidate.
+
+    During planning the pipeline attaches `person_fit` (derived from real Qloo affinity),
+    which is used whenever present. The keyword heuristic below is only reached for
+    offline/mock candidates that were never scored against Qloo.
+    """
+    fits = getattr(candidate, "person_fit", None)
+    if isinstance(fits, dict) and profile.name in fits:
+        return fits[profile.name]
+
     signals = [
         f.get("name", "") if isinstance(f, dict) else str(f)
         for f in profile.favorites
@@ -229,7 +244,7 @@ def apply_constraints(
 
         # 1. Check Budget
         cand_price_level = PRICE_SCALE.get(cand.price_level, 2)
-        if cand.price_level is None:
+        if cand.price_level is None or not getattr(cand, "price_verified", True):
             passed_budget = True
             passed_budget_status = "unverified"
         elif cand_price_level > max_budget_level:
