@@ -147,10 +147,12 @@ def search_cultural_entities_autocomplete(
 ):
     """Qloo entity search for autocomplete, returning name, type, id, and image if available."""
     try:
+        results = []
         try:
             results = search_entity(name=q)
         except Exception:
             results = search_entity(name=q, force_mock=True)
+
         formatted = []
         for r in results:
             if not isinstance(r, dict):
@@ -160,7 +162,7 @@ def search_cultural_entities_autocomplete(
             name = r.get("name") or r.get("title") or props.get("name") or ""
             subtype = r.get("subtype") or r.get("type") or "cultural_entity"
 
-            if type and not is_type_match(str(subtype), type):
+            if type and isinstance(type, str) and type != "all" and not is_type_match(str(subtype), type):
                 continue
 
             images = props.get("images") or r.get("images") or []
