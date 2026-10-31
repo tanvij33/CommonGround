@@ -25,7 +25,7 @@ import json
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Callable
 
 import httpx
 from dotenv import load_dotenv
@@ -252,7 +252,8 @@ def _make_request(
     endpoint: str,
     params: Optional[Dict[str, Any]] = None,
     max_retries: int = 3,
-    backoff_factor: float = 0.5
+    backoff_factor: float = 0.5,
+    transform: Optional[Callable[[Any], Any]] = None
 ) -> Dict[str, Any]:
     """Executes a real HTTP request to the Qloo API with caching, retries, and error handling.
 
@@ -261,6 +262,7 @@ def _make_request(
     - Retries on HTTP 429 and 5xx with exponential backoff.
     - Raises actionable exceptions on 401/403, timeouts, or connection failures.
     - Never prints or exposes the API key.
+    - Optional `transform` slims the response before it is cached, logged, and returned.
     """
     api_key = get_qloo_api_key()
     if not api_key:
@@ -335,6 +337,8 @@ def _make_request(
 
                 # Successful response
                 data = response.json()
+                if transform is not None:
+                    data = transform(data)
 
                 # Cache successful response and log
                 _set_cache(cache_key, endpoint, clean_params, data)
@@ -561,6 +565,100 @@ def search_entity(name: str, force_mock: Optional[bool] = None) -> List[Dict[str
     elif isinstance(data, dict):
         return data.get("results") or data.get("entities") or data.get("data") or [data]
     return []
+
+
+def _slim_locality(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Reduces a raw Qloo locality entity to the fields needed for destination autocomplete.
+
+    Raw locality payloads include boundary polygons and dozens of travel-stat fields
+    (often >300KB per result), so they are never cached or logged in full.
+    """
+    if not isinstance(item, dict):
+        return None
+    props = item.get("properties") if isinstance(item.get("properties"), dict) else {}
+    eid = item.get("entity_id") or item.get("id")
+    name = str(item.get("name") or props.get("name") or "").strip()
+    if not eid or not name:
+        return None
+
+    label = str(item.get("disambiguation") or name).strip()
+    ancestors = props.get("ancestors") if isinstance(props.get("ancestors"), list) else []
+    country = next(
+        (a.get("name") for a in ancestors if isinstance(a, dict) and a.get("place") == "country" and a.get("name")),
+        None
+    )
+    if not country and "," in label:
+        country = label.rsplit(",", 1)[-1].strip()
+
+    return {
+        "id": str(eid),
+        "name": name,
+        "label": label,
+        # Qloo resolves the full disambiguated label to the exact locality the user picked
+        "query": label,
+        "country": country,
+        "description": props.get("short_description"),
+        "popularity": item.get("popularity"),
+    }
+
+
+def _slim_locality_response(data: Any) -> Dict[str, Any]:
+    raw = data.get("results") if isinstance(data, dict) else data
+    results = []
+    seen_labels = set()
+    for item in raw if isinstance(raw, list) else []:
+        slim = _slim_locality(item)
+        if slim and slim["label"].lower() not in seen_labels:
+            seen_labels.add(slim["label"].lower())
+            results.append(slim)
+    return {"results": results}
+
+
+def search_destinations(query: str, limit: int = 8, force_mock: Optional[bool] = None) -> List[Dict[str, Any]]:
+    """Searches Qloo for real destination localities (cities, regions, countries) by name.
+
+    In mock mode only the offline catalog cities are returned, since those are the only
+    destinations the offline planner can generate itineraries for.
+    """
+    query_norm = " ".join(query.strip().lower().split())
+    if not query_norm:
+        return []
+
+    use_mock = force_mock if force_mock is not None else is_qloo_mock_mode()
+    if use_mock:
+        return [
+            {
+                "id": f"mock-{city}",
+                "name": city.title(),
+                "label": f"{city.title()} (offline catalog)",
+                "query": city.title(),
+                "country": None,
+                "description": None,
+                "popularity": None,
+            }
+            for city in MOCK_CITIES_DATA.keys()
+            if query_norm in city
+        ][:limit]
+
+    # One fixed-size request per normalized query keeps the SQLite cache key stable across limits
+    data = _make_request(
+        "GET",
+        "/v2/search",
+        params={"query": query_norm, "types": "urn:entity:locality", "take": 15},
+        transform=_slim_locality_response
+    )
+    results = (data.get("results") if isinstance(data, dict) else None) or []
+
+    # Qloo ranks sub-areas (wards, parishes) highly; surface exact and prefix name matches first
+    def rank(item: Dict[str, Any]) -> int:
+        name = item["name"].lower()
+        if name == query_norm:
+            return 0
+        if name.startswith(query_norm):
+            return 1
+        return 2
+
+    return sorted(results, key=rank)[:limit]
 
 
 TYPE_HINT_MAP = {
@@ -870,7 +968,8 @@ def get_recommendations(
     signals: List[str],
     category: str,
     location: str,
-    force_mock: Optional[bool] = None
+    force_mock: Optional[bool] = None,
+    location_query: Optional[str] = None
 ) -> List[Candidate]:
     """Generates ranked venue recommendations matching a group or individual's taste profile.
 
@@ -886,6 +985,8 @@ def get_recommendations(
         category: Venue category: 'hotel', 'restaurant', 'cafe', 'bar', 'attraction', 'shop'.
         location: Target city (e.g. 'Lisbon', 'Tokyo', 'Delhi').
         force_mock: Optional override to force mock mode.
+        location_query: Optional precise Qloo location string (e.g. 'Porto, Porto, Portugal')
+            sent to the API instead of `location`; `location` is still used for display.
 
     Returns:
         List of Candidate objects sorted by qloo_affinity in descending order.
@@ -907,7 +1008,7 @@ def get_recommendations(
     endpoint = "/v2/insights"
     params: Dict[str, Any] = {
         "filter.type": "urn:entity:place",
-        "filter.location.query": location_clean,
+        "filter.location.query": (location_query or "").strip() or location_clean,
         "take": 20
     }
     if signals:

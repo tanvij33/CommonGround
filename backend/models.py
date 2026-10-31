@@ -96,6 +96,11 @@ class TripCreateInput(BaseModel):
     """Payload to initialize a new group trip."""
     name: str = Field(..., min_length=1)
     destination: str = Field(..., min_length=1)
+    destination_query: Optional[str] = Field(
+        default=None,
+        max_length=300,
+        description="Precise Qloo location string from destination search (e.g. 'Porto, Porto, Portugal')"
+    )
     days: int = Field(default=2, ge=1, le=14)
 
 

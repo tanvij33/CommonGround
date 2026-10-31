@@ -15,11 +15,9 @@ import {
   Trip,
   CulturalFavorite,
   AutocompleteEntity,
+  DestinationResult,
 } from "@/lib/api";
-import {
-  searchDestinations,
-  DestinationCity,
-} from "@/lib/autocompleteData";
+import { DestinationAutocomplete } from "@/components/ui/DestinationAutocomplete";
 import {
   Compass,
   MapPin,
@@ -46,15 +44,15 @@ export default function CreateTripPage() {
 
   // Basic Form State
   const [tripName, setTripName] = useState("Lisbon Cultural Tour");
-  const [destination, setDestination] = useState("Lisbon");
+  const [destination, setDestination] = useState<DestinationResult | null>({
+    id: "default-lisbon",
+    name: "Lisbon",
+    label: "Lisbon, Portugal",
+    query: "Lisbon",
+  });
   const [days, setDays] = useState(2);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Destination Autocomplete State
-  const [showDestDropdown, setShowDestDropdown] = useState(false);
-  const [destMatches, setDestMatches] = useState<DestinationCity[]>([]);
-  const destDropdownRef = useRef<HTMLDivElement>(null);
 
   // Organizer Cultural Favorites State
   const [includeOrganizerTaste, setIncludeOrganizerTaste] = useState(true);
@@ -90,18 +88,9 @@ export default function CreateTripPage() {
     { name: "Acne Studios", type: "brand" },
   ];
 
-  // Update destination typeahead matches
-  useEffect(() => {
-    const results = searchDestinations(destination);
-    setDestMatches(results);
-  }, [destination]);
-
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (destDropdownRef.current && !destDropdownRef.current.contains(e.target as Node)) {
-        setShowDestDropdown(false);
-      }
       if (favDropdownRef.current && !favDropdownRef.current.contains(e.target as Node)) {
         setIsFavDropdownOpen(false);
       }
@@ -157,9 +146,9 @@ export default function CreateTripPage() {
     };
   }, [createdTrip?.id]);
 
-  const selectDestination = (city: DestinationCity) => {
-    setDestination(city.name);
-    setShowDestDropdown(false);
+  const selectDestination = (city: DestinationResult | null) => {
+    setDestination(city);
+    if (!city) return;
     if (tripName === "Lisbon Cultural Tour" || tripName.endsWith("Cultural Tour")) {
       setTripName(`${city.name} Cultural Tour`);
     }
@@ -206,8 +195,12 @@ export default function CreateTripPage() {
 
   const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tripName.trim() || !destination.trim()) {
-      setErrorMsg("Please enter both a trip name and a destination.");
+    if (!tripName.trim()) {
+      setErrorMsg("Please enter a trip name.");
+      return;
+    }
+    if (!destination) {
+      setErrorMsg("Please search for and select a destination from the suggestions.");
       return;
     }
 
@@ -217,7 +210,8 @@ export default function CreateTripPage() {
     try {
       const res = await api.createTrip({
         name: tripName.trim(),
-        destination: destination.trim(),
+        destination: destination.name,
+        destination_query: destination.query,
         days: Number(days),
       });
 
@@ -242,28 +236,8 @@ export default function CreateTripPage() {
       setCreatedTrip(tripData);
       setToastMsg("Trip created successfully! Share the invite link with your group.");
     } catch {
-      // Fallback for offline / mock mode
-      const mockId = `trip-${Math.random().toString(36).substring(2, 9)}`;
-      const fullInviteUrl = `${window.location.origin}/join/${mockId}`;
-      setInviteUrl(fullInviteUrl);
-      const members: any[] = [];
-      if (includeOrganizerTaste && organizerFavorites.length > 0) {
-        members.push({
-          id: "prof-creator",
-          name: organizerName.trim() || "You (Organizer)",
-          favorites: organizerFavorites,
-          constraints: { budget: "$$", pace: "moderate" },
-        });
-      }
-      setCreatedTrip({
-        id: mockId,
-        name: tripName,
-        destination,
-        days,
-        status: "waiting",
-        members,
-      });
-      setToastMsg("Created in offline/mock mode.");
+      // Never fake a trip: an invite link to a trip the backend doesn't know about is useless
+      setErrorMsg("Could not create the trip. Check that the backend is running and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -373,81 +347,11 @@ export default function CreateTripPage() {
               </div>
 
               {/* Destination Input & Typeahead Dropdown */}
-              <div className="space-y-2 relative" ref={destDropdownRef}>
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-mono font-bold text-ink-700 uppercase tracking-wider block">
-                    Destination City
-                  </label>
-                  <span className="text-[11px] font-mono text-ink-400">
-                    Type to see destination options
-                  </span>
-                </div>
-
-                <Input
-                  icon={<MapPin className="w-4 h-4 text-brand-violet" />}
-                  value={destination}
-                  onFocus={() => setShowDestDropdown(true)}
-                  onChange={(e) => {
-                    setDestination(e.target.value);
-                    setShowDestDropdown(true);
-                  }}
-                  placeholder="e.g. Lisbon, Tokyo, Berlin, Paris, New York..."
-                  required
-                />
-
-                {/* Dropdown Options */}
-                {showDestDropdown && destMatches.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white/95 backdrop-blur-md rounded-2xl border border-borderline shadow-float max-h-56 overflow-y-auto divide-y divide-borderline/40">
-                    {destMatches.map((city) => (
-                      <button
-                        key={`${city.name}-${city.country}`}
-                        type="button"
-                        onClick={() => selectDestination(city)}
-                        className="w-full px-4 py-2.5 text-left text-xs hover:bg-brand-violet/5 transition-colors flex items-center justify-between gap-2"
-                      >
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-nearblack">
-                              {city.name}
-                            </span>
-                            <span className="text-ink-400 text-[11px]">
-                              • {city.country}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-ink-400 font-mono truncate">
-                            {city.vibes.slice(0, 3).join(" • ")}
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono text-brand-violet px-2 py-0.5 rounded-pill bg-brand-violet/10 shrink-0">
-                          Select
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[11px] font-mono text-ink-400 mr-1">Popular:</span>
-                  {quickCities.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => {
-                        setDestination(c);
-                        if (tripName === "Lisbon Cultural Tour" || tripName.endsWith("Cultural Tour")) {
-                          setTripName(`${c} Cultural Tour`);
-                        }
-                      }}
-                      className={`text-xs px-2.5 py-0.5 rounded-pill border transition-colors ${destination.toLowerCase() === c.toLowerCase()
-                          ? "bg-brand-violet text-white border-brand-violet font-semibold"
-                          : "bg-subtle text-ink-700 border-borderline hover:bg-borderline"
-                        }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <DestinationAutocomplete
+                selected={destination}
+                onSelect={selectDestination}
+                quickCities={quickCities}
+              />
 
               {/* Trip Duration */}
               <div className="space-y-2">

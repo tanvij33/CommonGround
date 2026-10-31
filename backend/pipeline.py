@@ -100,6 +100,7 @@ def generate_plan(
     cfg = config or {}
     use_mock = cfg.get("force_mock", is_qloo_mock_mode())
     destination = trip.destination or "Lisbon"
+    location_query = getattr(trip, "destination_query", None) or destination
     trip_days = max(1, getattr(trip, "days", 2) or 2)
     trip_id = trip.id or f"trip-{uuid.uuid4().hex[:8]}"
 
@@ -168,7 +169,8 @@ def generate_plan(
                     signals=signals,
                     category=cat,
                     location=destination,
-                    force_mock=use_mock
+                    force_mock=use_mock,
+                    location_query=location_query
                 )
                 for c in cands:
                     all_raw_candidates[c.id] = c

@@ -42,6 +42,7 @@ from backend.pipeline import (
 )
 from backend.qloo_client import (
     search_entity,
+    search_destinations,
     get_recommendations,
     resolve_favorite,
     is_type_match,
@@ -183,6 +184,19 @@ def search_cultural_entities_autocomplete(
         raise HTTPException(status_code=500, detail=f"Entity search error: {e}")
 
 
+@app.get("/destinations/search")
+@app.get("/api/destinations/search")
+def search_destinations_autocomplete(
+    q: str = Query(..., min_length=2, max_length=100, description="City, region, or country name"),
+    limit: int = Query(8, ge=1, le=10)
+):
+    """Qloo locality search for destination autocomplete. Returns 502 if Qloo is unavailable."""
+    try:
+        return search_destinations(q, limit=limit)
+    except QlooError as e:
+        raise HTTPException(status_code=502, detail=f"Destination search is unavailable: {e}")
+
+
 # =====================================================================
 # 3. Trip Creation & Member Profile Endpoints
 # =====================================================================
@@ -196,6 +210,7 @@ def create_trip(payload: TripCreateInput, db: Session = Depends(get_db)):
         title=payload.name.strip(),
         name=payload.name.strip(),
         destination=payload.destination.strip(),
+        destination_query=(payload.destination_query or "").strip() or None,
         days=payload.days,
         status="waiting"
     )
@@ -227,6 +242,7 @@ def get_trip_details(id: str, db: Session = Depends(get_db)):
         "id": trip.id,
         "name": trip.name or trip.title,
         "destination": trip.destination,
+        "destination_query": trip.destination_query,
         "days": trip.days or 2,
         "status": trip.status or "waiting",
         "created_at": trip.created_at.isoformat() if trip.created_at else None,
@@ -338,6 +354,7 @@ def _background_plan_runner(trip_id: str):
             id=trip.id,
             title=trip.title or trip.name or f"Trip to {trip.destination}",
             destination=trip.destination,
+            destination_query=trip.destination_query,
             days=trip.days or 2,
             members=profiles
         )

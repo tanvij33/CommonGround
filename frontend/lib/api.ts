@@ -30,6 +30,7 @@ export interface Trip {
   id: string;
   name: string;
   destination: string;
+  destination_query?: string | null;
   days: number;
   status: "waiting" | "running" | "done" | "failed";
   created_at?: string;
@@ -161,6 +162,18 @@ export interface AutocompleteEntity {
   category?: string;
   subtitle?: string;
   image?: string | null;
+}
+
+/** A real locality returned by Qloo destination search. */
+export interface DestinationResult {
+  id: string;
+  name: string;
+  /** Full disambiguated label, e.g. "Porto, Porto, Portugal" */
+  label: string;
+  /** Precise location string the backend sends to Qloo when planning */
+  query: string;
+  country?: string | null;
+  description?: string | null;
 }
 
 export interface ComparisonResult {
@@ -416,7 +429,7 @@ export const api = {
   },
 
   /** Creates a new group trip */
-  async createTrip(data: { name: string; destination: string; days: number }): Promise<{ id: string; invite_url: string }> {
+  async createTrip(data: { name: string; destination: string; destination_query?: string; days: number }): Promise<{ id: string; invite_url: string }> {
     if (USE_MOCK) {
       return { id: "trip-mock-1234", invite_url: "http://localhost:3000/trips/trip-mock-1234/join" };
     }
@@ -515,6 +528,34 @@ export const api = {
     }
 
     return curatedMatches;
+  },
+
+  /** Searches real destinations (Qloo localities). Throws on network/API errors so callers can show them. */
+  async searchDestinations(query: string, signal?: AbortSignal): Promise<DestinationResult[]> {
+    const cleanQuery = (query || "").trim();
+    if (cleanQuery.length < 2) return [];
+
+    if (USE_MOCK) {
+      // Frontend mock mode has no backend; only the offline catalog cities can be planned
+      return ["Lisbon", "Tokyo", "Delhi"]
+        .filter((c) => c.toLowerCase().includes(cleanQuery.toLowerCase()))
+        .map((c) => ({ id: `mock-${c.toLowerCase()}`, name: c, label: `${c} (offline catalog)`, query: c }));
+    }
+
+    const url = new URL(`${API_BASE_URL}/destinations/search`);
+    url.searchParams.set("q", cleanQuery);
+    const res = await fetch(url.toString(), { signal });
+    if (!res.ok) {
+      let detail = `Destination search failed (HTTP ${res.status})`;
+      try {
+        const body = await res.json();
+        if (body?.detail) detail = String(body.detail).split("\n")[0];
+      } catch {
+        // Non-JSON error body
+      }
+      throw new Error(detail);
+    }
+    return res.json();
   },
 
   /** Adds a traveler profile to a trip */
