@@ -23,6 +23,8 @@ import re
 import time
 import json
 import hashlib
+import threading
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, Callable
@@ -39,6 +41,8 @@ load_dotenv()
 
 # Audit log file path
 LOG_FILE_PATH = Path("./data/qloo_log.jsonl")
+# Qloo calls may run on several threads; one writer at a time keeps every log line intact
+_LOG_LOCK = threading.Lock()
 
 
 # =====================================================================
@@ -174,8 +178,10 @@ def _log_interaction(
             "response": response_body,
             "error": error_message
         }
-        with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
-            f.write(json.dumps(log_entry, default=str) + "\n")
+        line = json.dumps(log_entry, default=str) + "\n"
+        with _LOG_LOCK:
+            with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
+                f.write(line)
     except Exception as e:
         print(f"[Warning] Failed to write to qloo_log.jsonl: {e}")
 
@@ -253,7 +259,8 @@ def _make_request(
     params: Optional[Dict[str, Any]] = None,
     max_retries: int = 3,
     backoff_factor: float = 0.5,
-    transform: Optional[Callable[[Any], Any]] = None
+    transform: Optional[Callable[[Any], Any]] = None,
+    timeout: float = 30.0
 ) -> Dict[str, Any]:
     """Executes a real HTTP request to the Qloo API with caching, retries, and error handling.
 
@@ -304,7 +311,7 @@ def _make_request(
     last_exception = None
     for attempt in range(max_retries):
         try:
-            with httpx.Client(timeout=30.0) as client:
+            with httpx.Client(timeout=timeout) as client:
                 if method.upper() == "GET":
                     response = client.get(url, headers=headers, params=clean_params)
                 else:
@@ -470,7 +477,9 @@ def parse_raw_candidate(raw: Dict[str, Any], category: str, location: str) -> Ca
     unique_tags = list(dict.fromkeys(tags))[:10]
 
     # 5. Price level extraction (defaults safely to "$$")
-    price_raw = props.get("price_level") or raw.get("price_level") or props.get("price") or raw.get("price") or "$$"
+    price_raw = props.get("price_level") or raw.get("price_level") or props.get("price") or raw.get("price")
+    price_verified = bool(price_raw)  # hotels and sights usually carry no price in Qloo
+    price_raw = price_raw or "$$"
     price_scale = {1: "$", 2: "$$", 3: "$$$", 4: "$$$$"}
     if isinstance(price_raw, int) and price_raw in price_scale:
         price_level = price_scale[price_raw]
@@ -547,7 +556,8 @@ def parse_raw_candidate(raw: Dict[str, Any], category: str, location: str) -> Ca
         primary_genre=primary_genre,
         qloo_genres=genre_ids,
         popularity=popularity,
-        affinity_source=affinity_source
+        affinity_source=affinity_source,
+        price_verified=price_verified
     )
 
 
@@ -1131,7 +1141,8 @@ def get_recommendations(
     signal_ids: Optional[List[str]] = None,
     take: int = 20,
     include_other_categories: bool = False,
-    dropped_log: Optional[List[Dict[str, str]]] = None
+    dropped_log: Optional[List[Dict[str, str]]] = None,
+    max_price_level: Optional[int] = None
 ) -> List[Candidate]:
     """Generates ranked venue recommendations matching a group or individual's taste profile.
 
@@ -1156,6 +1167,8 @@ def get_recommendations(
         include_other_categories: Also return venues that classified into a different
             category than requested (each keeps its own real category).
         dropped_log: Optional list that receives {name, reason} for every excluded venue.
+        max_price_level: Optional price ceiling (1-4) sent to Qloo as filter.price_level.max, so a
+            budget limit shapes the search itself instead of discarding results afterwards.
 
     Returns:
         List of Candidate objects sorted by qloo_affinity in descending order.
@@ -1183,6 +1196,8 @@ def get_recommendations(
         params["filter.tags"] = CATEGORY_FILTER_TAGS[category_clean]
     if category_clean in CATEGORY_EXCLUDE_TAGS:
         params["filter.exclude.tags"] = CATEGORY_EXCLUDE_TAGS[category_clean]
+    if max_price_level and 1 <= int(max_price_level) <= 4:
+        params["filter.price_level.max"] = int(max_price_level)
 
     ids = list(signal_ids or [])
     if not ids and signals:
@@ -1245,13 +1260,17 @@ def _slim_affinity_response(data: Any) -> Dict[str, Any]:
 def get_place_affinities(
     signal_ids: List[str],
     entity_ids: List[str],
-    chunk_size: int = 50
+    chunk_size: int = 50,
+    entity_type: str = "urn:entity:place",
+    timeout: float = 30.0,
+    max_retries: int = 3
 ) -> Dict[str, float]:
-    """Returns Qloo's real affinity of each given place for one traveler's taste signals.
+    """Returns Qloo's real affinity of each given entity for one traveler's taste signals.
 
-    Uses /v2/insights restricted to the given place IDs (filter.results.entities), so every
-    traveler is scored by Qloo against the same shared candidate pool. Places Qloo does not
+    Uses /v2/insights restricted to the given entity IDs (filter.results.entities), so every
+    traveler is scored by Qloo against the same shared candidate pool. Entities Qloo does not
     return are simply absent from the result; no value is invented for them.
+    Defaults to places; pass entity_type='urn:entity:artist' to score artists.
     """
     if not signal_ids or not entity_ids:
         return {}
@@ -1262,16 +1281,168 @@ def get_place_affinities(
             "GET",
             "/v2/insights",
             params={
-                "filter.type": "urn:entity:place",
+                "filter.type": entity_type,
                 "filter.results.entities": ",".join(chunk),
                 "signal.interests.entities": ",".join(signal_ids[:8]),
                 "take": len(chunk),
             },
-            transform=_slim_affinity_response
+            transform=_slim_affinity_response,
+            timeout=timeout,
+            max_retries=max_retries
         )
         for row in data.get("results", []) if isinstance(data, dict) else []:
             affinities[row["id"]] = row["affinity"]
     return affinities
+
+
+# =====================================================================
+# Music: artist resolution and artist insights
+# =====================================================================
+
+ARTIST_TYPE = "urn:entity:artist"
+
+# Music requests are optional extras: fail fast rather than hang for minutes
+MUSIC_TIMEOUT = 20.0
+MUSIC_RETRIES = 2
+
+
+def normalize_music_name(name: Any) -> str:
+    """Lowercases, strips accents and keeps only letters/digits, for exact-name comparison."""
+    text = unicodedata.normalize("NFKD", str(name or "")).casefold()
+    return "".join(ch for ch in text if ch.isalnum())
+
+
+def _first_external_id(external: Any, key: str) -> Optional[str]:
+    entries = external.get(key) if isinstance(external, dict) else None
+    if isinstance(entries, list) and entries and isinstance(entries[0], dict) and entries[0].get("id"):
+        return str(entries[0]["id"])
+    return None
+
+
+def _slim_artist(raw: Any) -> Optional[Dict[str, Any]]:
+    """Reduces a raw Qloo artist entity to the verified fields the music engine uses.
+
+    Raw artist payloads carry long biographies and translations; they are never cached whole.
+    Every value is taken directly from Qloo: nothing here is inferred or invented.
+    """
+    if not isinstance(raw, dict):
+        return None
+    eid = raw.get("entity_id") or raw.get("id")
+    name = str(raw.get("name") or "").strip()
+    if not eid or not name:
+        return None
+
+    props = raw.get("properties") if isinstance(raw.get("properties"), dict) else {}
+    external = raw.get("external") if isinstance(raw.get("external"), dict) else {}
+    query_block = raw.get("query") if isinstance(raw.get("query"), dict) else {}
+    image = props.get("image")
+
+    def str_list(value: Any, limit: int) -> List[str]:
+        return [str(v).strip() for v in value if str(v).strip()][:limit] if isinstance(value, list) else []
+
+    affinity = query_block.get("affinity")
+    popularity = raw.get("popularity")
+    return {
+        # Search returns lower-case UUIDs but insights return upper-case: normalize so IDs always compare equal
+        "id": str(eid).upper(),
+        "name": name,
+        "aliases": str_list(props.get("aliases"), 8),
+        "affinity": float(affinity) if isinstance(affinity, (int, float)) else None,
+        "popularity": float(popularity) if isinstance(popularity, (int, float)) else None,
+        "genres": str_list(props.get("primary_genres"), 4),
+        "notable_songs": str_list(props.get("notable_songs"), 8),
+        "place_of_birth": props.get("place_of_birth") if isinstance(props.get("place_of_birth"), str) else None,
+        "image_url": image.get("url") if isinstance(image, dict) else None,
+        "spotify_id": _first_external_id(external, "spotify"),
+        "lastfm_id": _first_external_id(external, "lastfm"),
+        "musicbrainz_id": _first_external_id(external, "musicbrainz"),
+    }
+
+
+def _slim_artists_response(data: Any) -> Dict[str, Any]:
+    slim = [_slim_artist(r) for r in _extract_raw_items(data)]
+    return {"results": [s for s in slim if s]}
+
+
+def resolve_artist(name: str) -> Optional[Dict[str, Any]]:
+    """Resolves a favourite to a real Qloo *music artist* entity, or None.
+
+    Unlike resolve_favorite, this searches only urn:entity:artist and accepts a match only when
+    the artist's name or one of its aliases equals the query (accents and punctuation ignored).
+    A near miss such as 'Metallica and Ozzy Osbourne' for 'Metallica' is rejected, so a wrong
+    artist never seeds a recommendation. Returns the slim artist record plus 'matched_name'.
+    """
+    wanted = normalize_music_name(name)
+    if not wanted:
+        return None
+    data = _make_request(
+        "GET",
+        "/v2/search",
+        params={"query": str(name).strip(), "types": ARTIST_TYPE, "take": 10},
+        transform=_slim_artists_response,
+        timeout=MUSIC_TIMEOUT,
+        max_retries=MUSIC_RETRIES
+    )
+    matches = []
+    for rec in data.get("results", []) if isinstance(data, dict) else []:
+        names = [rec["name"]] + rec["aliases"]
+        if any(normalize_music_name(n) == wanted for n in names):
+            matches.append(rec)
+    if not matches:
+        return None
+    best = max(matches, key=lambda r: r["popularity"] or 0.0)
+    return {**best, "matched_name": str(name).strip()}
+
+
+def get_artist_insights(
+    signal_entity_ids: Optional[List[str]] = None,
+    signal_tag_ids: Optional[List[str]] = None,
+    location_query: Optional[str] = None,
+    take: int = 30
+) -> List[Dict[str, Any]]:
+    """Qloo artist recommendations for entity, tag and/or location signals (all optional, any mix).
+
+    Each result is a slim artist record whose 'affinity' is Qloo's own query.affinity for the
+    given signals (None when Qloo did not provide one). Raises QlooError on API failure.
+    """
+    params: Dict[str, Any] = {"filter.type": ARTIST_TYPE, "take": take}
+    if signal_entity_ids:
+        params["signal.interests.entities"] = ",".join(signal_entity_ids[:8])
+    if signal_tag_ids:
+        params["signal.interests.tags"] = ",".join(signal_tag_ids[:8])
+    if location_query:
+        params["signal.location.query"] = location_query.strip()
+    if len(params) == 2:
+        return []
+    data = _make_request("GET", "/v2/insights", params=params, transform=_slim_artists_response,
+                         timeout=MUSIC_TIMEOUT, max_retries=MUSIC_RETRIES)
+    return data.get("results", []) if isinstance(data, dict) else []
+
+
+def get_destination_country(location_query: str) -> Optional[str]:
+    """Returns the English country name Qloo reports for places in a destination, or None.
+
+    Uses one place lookup (cached): geocode.country is English, which place_of_birth also uses,
+    so the two can be compared reliably regardless of the destination's local-language name.
+    """
+    def transform(data: Any) -> Dict[str, Any]:
+        countries = []
+        for raw in _extract_raw_items(data):
+            geocode = (raw.get("properties") or {}).get("geocode") if isinstance(raw, dict) else None
+            if isinstance(geocode, dict) and geocode.get("country"):
+                countries.append(str(geocode["country"]))
+        return {"results": countries}
+
+    data = _make_request(
+        "GET",
+        "/v2/insights",
+        params={"filter.type": "urn:entity:place", "filter.location.query": location_query.strip(), "take": 5},
+        transform=transform,
+        timeout=MUSIC_TIMEOUT,
+        max_retries=MUSIC_RETRIES
+    )
+    countries = data.get("results", []) if isinstance(data, dict) else []
+    return max(set(countries), key=countries.count) if countries else None
 
 
 def _get_mock_recommendations(

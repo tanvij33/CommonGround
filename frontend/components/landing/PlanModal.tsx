@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { Chip } from "@/components/ui/Chip";
+import { MusicPlaylistPanel } from "@/components/music/MusicPlaylistPanel";
 import { AppWindow } from "@/components/ui/AppWindow";
 import {
   X,
@@ -271,36 +272,13 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose }) => {
                 ))}
               </div>
 
-              {/* Collaborative Soundtrack Card */}
-              {plan.extras?.playlist && (
-                <div className="p-5 rounded-3xl bg-subtle/80 border border-borderline/80 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Music className="w-4 h-4 text-brand-violet" />
-                    <h4 className="text-xs font-mono font-bold text-nearblack uppercase tracking-wider">
-                      Collaborative Trip Soundtrack (Cross-Taste Bridges)
-                    </h4>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {plan.extras.playlist.map((track, tIdx) => (
-                      <div
-                        key={tIdx}
-                        className="p-3 rounded-2xl bg-white border border-borderline/60 space-y-1"
-                      >
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-nearblack">
-                            {track.title}
-                          </span>
-                          <span className="font-mono text-ink-500 text-[11px]">
-                            {track.artist}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-ink-500 leading-tight">
-                          {track.note}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {/* Group soundtrack (real Qloo artists, catalogue-verified tracks); not shown for the static sample */}
+              {plan.trip_id !== SAMPLE_PLAN.trip_id && (
+                <MusicPlaylistPanel
+                  tripId={plan.trip_id}
+                  music={plan.extras?.music}
+                  onChange={(music) => setPlan((prev) => (prev ? { ...prev, extras: { ...prev.extras, music } } : prev))}
+                />
               )}
             </>
           )}

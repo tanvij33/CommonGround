@@ -158,7 +158,8 @@ def _run_plan(days=2):
     trip = Trip(id="trip-test", title="Porto test", destination="Porto", destination_query="Porto, Porto, Portugal", days=days)
     with patch("backend.pipeline.resolve_favorite", side_effect=lambda name, **kw: {"id": f"sig-{name}"}), \
          patch("backend.pipeline.get_recommendations", side_effect=_fake_recommendations), \
-         patch("backend.pipeline.get_place_affinities", side_effect=_fake_affinities):
+         patch("backend.pipeline.get_place_affinities", side_effect=_fake_affinities), \
+         patch("backend.pipeline.safe_build_playlist", return_value={"mode": "favourites", "status": "unavailable", "entries": []}):
         return generate_plan(trip, _profiles(), config={"force_mock": False})
 
 
@@ -173,7 +174,7 @@ def test_plan_never_schedules_lodging_and_keeps_stay_separate():
 def test_plan_has_no_duplicate_venues_including_extras():
     plan = _run_plan()
     ids = [s["candidate_id"] for d in plan["days"] for s in d["slots"]]
-    extras = [v["id"] for k, v in plan["extras"].items() if k != "playlist" and v]
+    extras = [v["id"] for k, v in plan["extras"].items() if k != "music" and v]
     assert len(ids) == len(set(ids))
     assert not set(ids) & set(extras)
     assert len(extras) == len(set(extras))
@@ -226,3 +227,148 @@ def test_demo_profiles_are_added_to_the_current_trip():
         assert sorted(m["name"] for m in members) == ["Aisha", "Kabir", "Meera", "Rohan"]
 
         assert client.post("/trips/trip-does-not-exist/demo-profiles").status_code == 404
+
+
+# ---------------------------------------------------------------------
+# Budget handling and the staged fallback (regression: Tokyo failed with
+# "Qloo returned no activity venues" because taste-matched venues were all
+# above the group's budget and were rejected after fetching)
+# ---------------------------------------------------------------------
+
+from backend.qloo_client import QlooNoCandidatesError
+from backend.scoring import apply_constraints, group_budget_level
+
+
+def _priced(cid, name, category, price, verified=True):
+    return Candidate(id=cid, name=name, category=category, location="Tokyo", qloo_affinity=0.8, price_level=price,
+                     price_verified=verified, latitude=35.68, longitude=139.70, popularity=0.7,
+                     primary_genre=f"urn:tag:genre:place:{category}", affinity_source="qloo")
+
+
+def _venues(category, tag, price, n=6, verified=True):
+    return [_priced(f"{category}-{tag}-{i}", f"{tag.title()} {category} {i}", category, price, verified) for i in range(n)]
+
+
+def _budget_group(budget="$$"):
+    return [Profile(name="Paoli", favorites=[{"name": "Loewe", "type": "brand"}], constraints=ProfileConstraints(budget=budget))]
+
+
+def _run_budget_plan(fake, budget="$$", days=2):
+    trip = Trip(id="trip-tokyo", title="Tokyo", destination="Tokyo", destination_query="東京都", days=days)
+    recorder = MagicMock(side_effect=fake)
+    with patch("backend.pipeline.resolve_favorite", side_effect=lambda name, **kw: {"id": f"sig-{name}"}), \
+         patch("backend.pipeline.get_recommendations", recorder), \
+         patch("backend.pipeline.get_place_affinities", side_effect=_fake_affinities), \
+         patch("backend.pipeline.safe_build_playlist", return_value={"mode": "favourites", "status": "unavailable", "entries": []}):
+        return generate_plan(trip, _budget_group(budget), config={"force_mock": False}), recorder
+
+
+def _fallback_fake(category, signal_ids=None, **kw):
+    """Taste-matched results are premium with no sights; destination-only results are affordable."""
+    if signal_ids:
+        if category == "hotel":
+            return _venues("hotel", "inn", "$$", n=2, verified=False)
+        if category == "attraction":
+            return []
+        return _venues(category, "lux", "$$$$")
+    if category == "hotel":
+        return []
+    return _venues(category, "cheap", "$$")
+
+
+def test_group_budget_level_is_the_lowest_member_ceiling():
+    assert group_budget_level([]) is None
+    assert group_budget_level(_budget_group("$$")) == 2
+    assert group_budget_level(_budget_group("$$$$")) is None            # no effective limit
+    both = _budget_group("$$$") + [Profile(name="B", favorites=[], constraints=ProfileConstraints(budget="$"))]
+    assert group_budget_level(both) == 1
+    assert group_budget_level([Profile(name="C", favorites=[], constraints=ProfileConstraints())]) is None
+
+
+def test_budget_is_sent_to_qloo_only_for_categories_that_have_prices():
+    _, recorder = _run_budget_plan(_fallback_fake)
+    sent = {}
+    for call in recorder.call_args_list:
+        sent.setdefault(call.kwargs["category"], set()).add(call.kwargs["max_price_level"])
+    assert sent["restaurant"] == sent["cafe"] == sent["bar"] == sent["shop"] == {2}
+    assert sent["hotel"] == sent["attraction"] == {None}               # Qloo has no price data for these
+
+
+def test_unknown_price_is_unverified_not_rejected():
+    hotel = _priced("h", "Unpriced Hotel", "hotel", "$$", verified=False)
+    priced = _priced("r", "Pricey", "restaurant", "$$$")
+    kept, records = apply_constraints([hotel, priced], _budget_group("$"))
+    assert records["h"]["budget_status"] == "unverified" and hotel in kept
+    assert records["r"]["budget_status"] == "failed" and priced not in kept     # a known price is still enforced
+
+
+def test_parse_marks_missing_price_as_unverified():
+    unpriced = parse_raw_candidate({"id": "x", "name": "Some Hotel"}, category="hotel", location="Tokyo")
+    priced = parse_raw_candidate({"id": "y", "name": "Some Cafe", "properties": {"price_level": 2}}, category="cafe", location="Tokyo")
+    assert unpriced.price_verified is False and priced.price_verified is True and priced.price_level == "$$"
+
+
+def test_live_query_carries_the_price_ceiling():
+    payload = {"results": {"entities": [{"entity_id": "p1", "name": "Ramen Ya", "popularity": 0.5, "location": {"lat": 35.6, "lon": 139.7},
+                                          "properties": {"primary_genre": {"id": "urn:tag:genre:place:restaurant"}, "price_level": 2}}]}}
+    with patch("backend.qloo_client.get_qloo_api_key", return_value="k"), patch("backend.qloo_client._get_cache", return_value=None), \
+         patch("backend.qloo_client._set_cache"), patch("backend.qloo_client._log_interaction"), patch("httpx.Client") as client_cls:
+        resp = MagicMock(status_code=200)
+        resp.json.return_value = payload
+        client = MagicMock()
+        client.get.return_value = resp
+        client_cls.return_value.__enter__.return_value = client
+        get_recommendations(signals=[], category="restaurant", location="Tokyo", force_mock=False,
+                            location_query="東京都", signal_ids=["s1"], max_price_level=2)
+        assert client.get.call_args[1]["params"]["filter.price_level.max"] == 2
+        get_recommendations(signals=[], category="restaurant", location="Tokyo", force_mock=False,
+                            location_query="東京都", signal_ids=["s1"])
+        assert "filter.price_level.max" not in client.get.call_args[1]["params"]
+
+
+def test_tokyo_regression_over_budget_taste_results_trigger_the_fallback_not_a_crash():
+    plan, recorder = _run_budget_plan(_fallback_fake)
+    slots = [s for d in plan["days"] for s in d["slots"]]
+    fallback = plan["under_the_hood"]["fallback"]
+    assert slots and fallback["used"] is True
+    assert {"restaurant", "attraction"} <= set(fallback["categories"]) and fallback["relaxed"] == "taste signals"
+    assert all("lux" not in s["candidate_id"] for s in slots)                    # over-budget venues never scheduled
+    assert all(s["sourcing"] == "destination_popular" for s in slots)            # honest about where they came from
+    assert all("not matched to the group's taste signals" in s["why"] for s in slots)
+    assert plan["stay"] is not None and plan["stay"]["category"] == "hotel"
+    assert plan["under_the_hood"]["budget_ceiling"] == "$$"
+    fallback_calls = [c for c in recorder.call_args_list if not c.kwargs["signal_ids"]]
+    assert fallback_calls and all(c.kwargs["signals"] == [] for c in fallback_calls)       # taste really was relaxed
+    assert all(c.kwargs["max_price_level"] == (2 if c.kwargs["category"] in ("restaurant", "cafe", "bar", "shop") else None)
+               for c in recorder.call_args_list)                                           # budget never relaxed
+
+
+def test_no_fallback_when_taste_matched_venues_already_fit():
+    def taste_ok(category, signal_ids=None, **kw):
+        return _venues(category, "good", "$$", n=5)
+    plan, recorder = _run_budget_plan(taste_ok)
+    assert plan["under_the_hood"]["fallback"] == {"used": False}
+    assert all(s["sourcing"] == "taste_matched" for d in plan["days"] for s in d["slots"])
+    assert all(c.kwargs["signal_ids"] for c in recorder.call_args_list)                    # one pass only
+
+
+def test_nothing_affordable_gives_an_explanation_and_never_substitutes():
+    def all_luxury(category, signal_ids=None, **kw):
+        return _venues("hotel", "inn", "$$", n=1, verified=False) if category == "hotel" else _venues(category, "lux", "$$$$")
+    with pytest.raises(RuntimeError) as err:
+        _run_budget_plan(all_luxury)
+    message = str(err.value)
+    assert "none fit this group's constraints" in message and "$$ budget" in message
+    assert "exceeds group budget limit" in message and "Widening beyond the group's taste signals did not help" in message
+    assert "Nothing was substituted" in message and "no activity venues" not in message
+
+
+def test_nothing_returned_by_qloo_is_explained_separately():
+    def only_hotels(category, signal_ids=None, **kw):
+        if category == "hotel":
+            return _venues("hotel", "inn", "$$", n=1, verified=False)
+        raise QlooNoCandidatesError("No candidates returned by Qloo API")
+    with pytest.raises(RuntimeError) as err:
+        _run_budget_plan(only_hotels)
+    assert "Qloo returned no restaurants, cafes, bars, sights or shops for Tokyo" in str(err.value)
+    assert "No candidates returned" in str(err.value)

@@ -14,6 +14,7 @@ Modular planning pipeline that works for ANY group entered via API:
 
 import math
 import uuid
+from collections import Counter
 import json
 import statistics
 from typing import List, Dict, Any, Optional, Tuple, Callable
@@ -21,6 +22,7 @@ from typing import List, Dict, Any, Optional, Tuple, Callable
 from backend.models import Candidate, Profile, Trip, ProfileConstraints
 from backend.scoring import (
     apply_constraints,
+    group_budget_level,
     group_score,
     split_and_meet,
     TasteDebtTracker,
@@ -42,8 +44,18 @@ from backend.qloo_client import (
     QlooError
 )
 from backend.mock_data import calculate_mock_affinity
+from backend.music import safe_build_playlist
 
 CATEGORIES = ["hotel", "restaurant", "cafe", "bar", "attraction", "shop"]
+# Fewer usable venues than this triggers the destination-popular fallback query
+MIN_ACTIVITY_POOL = 6
+MIN_PER_CATEGORY = {"hotel": 1, "restaurant": 3, "cafe": 3, "bar": 3, "attraction": 3, "shop": 3}
+# Qloo only has price data for these; hotels and sights have none, so a price filter would erase them
+PRICED_CATEGORIES = ("restaurant", "cafe", "bar", "shop")
+# Guardrail statuses that exclude a venue outright (dietary stays a soft preference)
+HARD_GUARDRAILS = ("budget_status", "mobility_status", "alcohol_free_status")
+# The playlist is optional: it may never hold up plan generation for longer than this
+MUSIC_TIMEOUT_SECONDS = 75.0
 from backend.llm import generate_structured, generate_text
 from backend.agent import CritiqueEvaluation
 
@@ -179,6 +191,27 @@ def _venue_summary(c: Optional[Candidate]) -> Optional[Dict[str, Any]]:
     }
 
 
+def _explain_empty_activity_pool(
+    destination: str,
+    pool: Dict[str, Candidate],
+    guardrail_records: Dict[str, Dict[str, Any]],
+    price_cap: Optional[int],
+    fallback_info: Dict[str, Any],
+    fetch_errors: List[str],
+) -> str:
+    """Says exactly why no activity venue survived, instead of a generic 'no venues' error."""
+    activities = [c for c in pool.values() if c.category in ACTIVITY_CATEGORIES]
+    if not activities:
+        detail = "; ".join(fetch_errors) or "none of the places Qloo returned were restaurants, cafes, bars, sights or shops"
+        return f"Qloo returned no restaurants, cafes, bars, sights or shops for {destination} ({detail})."
+    reasons = Counter(r for c in activities for r in guardrail_records.get(c.id, {}).get("reasons", []))
+    why = "; ".join(f"{count} x {reason.lower()}" for reason, count in reasons.most_common(3)) or "group constraints"
+    budget = f" at a {'$' * price_cap} budget" if price_cap else ""
+    widened = " Widening beyond the group's taste signals did not help." if fallback_info.get("used") else ""
+    return (f"Qloo returned {len(activities)} venues for {destination}, but none fit this group's constraints{budget} ({why}).{widened} "
+            "Nothing was substituted. Try a higher budget or fewer restrictions.")
+
+
 def generate_plan(
     trip: Trip,
     profiles: List[Profile],
@@ -206,7 +239,11 @@ def generate_plan(
     trip_days = max(1, getattr(trip, "days", 2) or 2)
     trip_id = trip.id or f"trip-{uuid.uuid4().hex[:8]}"
 
+    last_pct = {"value": 0}
+
     def _report(msg: str, pct: int):
+        pct = max(pct, last_pct["value"])  # the fallback inserts steps; the bar must never go backwards
+        last_pct["value"] = pct
         if progress_callback:
             try:
                 progress_callback(msg, pct)
@@ -256,30 +293,79 @@ def generate_plan(
     seen_names: set = set()
     excluded_venues: List[Dict[str, str]] = []
     fetch_errors: List[str] = []
+    fallback_ids: set = set()
+    # The budget is a hard constraint, so it goes into the Qloo query itself. Filtering afterwards
+    # discarded everything whenever the group's taste signals pulled results above its budget.
+    price_cap = group_budget_level(profiles)
 
-    for idx, cat in enumerate(CATEGORIES):
-        _report(f"Querying Qloo for {cat} venues in {destination}...", 30 + idx * 3)
-        try:
-            cands = get_recommendations(
-                signals=all_signal_names,
-                category=cat,
-                location=destination,
-                force_mock=use_mock,
-                location_query=location_query,
-                signal_ids=group_signal_ids,
-                take=20,
-                include_other_categories=True,
-                dropped_log=excluded_venues
-            )
-        except QlooError as e:
-            fetch_errors.append(f"{cat}: {str(e).splitlines()[0]}")
-            continue
-        for c in cands:
-            key = _normalize_name(c.name)
-            if c.id in pool or key in seen_names:
+    def fetch_into_pool(with_taste_signals: bool, progress_base: int, categories: Optional[List[str]] = None) -> Dict[str, int]:
+        """Queries Qloo for the given categories and merges new venues into the pool; returns additions per category."""
+        added: Dict[str, int] = {}
+        for idx, cat in enumerate(categories or CATEGORIES):
+            _report(f"Querying Qloo for {cat} venues in {destination}...", progress_base + idx * 2)
+            try:
+                cands = get_recommendations(
+                    signals=all_signal_names if with_taste_signals else [],
+                    category=cat,
+                    location=destination,
+                    force_mock=use_mock,
+                    location_query=location_query,
+                    signal_ids=group_signal_ids if with_taste_signals else [],
+                    take=20,
+                    include_other_categories=True,
+                    dropped_log=excluded_venues,
+                    max_price_level=price_cap if cat in PRICED_CATEGORIES else None
+                )
+            except QlooError as e:
+                fetch_errors.append(f"{cat}: {str(e).splitlines()[0]}")
                 continue
-            seen_names.add(key)
-            pool[c.id] = c
+            for c in cands:
+                key = _normalize_name(c.name)
+                if c.id in pool or key in seen_names:
+                    continue
+                seen_names.add(key)
+                pool[c.id] = c
+                if not with_taste_signals:
+                    fallback_ids.add(c.id)
+                added[c.category] = added.get(c.category, 0) + 1
+        return added
+
+    def usable_by_category() -> Dict[str, int]:
+        """Venues per category that satisfy every hard guardrail."""
+        _, records = apply_constraints(list(pool.values()), profiles)
+        counts = {cat: 0 for cat in CATEGORIES}
+        for c in pool.values():
+            if all(records.get(c.id, {}).get(k) != "failed" for k in HARD_GUARDRAILS):
+                counts[c.category] = counts.get(c.category, 0) + 1
+        return counts
+
+    fetch_into_pool(True, 30)
+
+    # Controlled fallback: relax the soft taste signals (never the budget, dietary, alcohol or
+    # accessibility limits) and ask Qloo for the destination's own venues in each category.
+    fallback_info: Dict[str, Any] = {"used": False}
+    usable_before = usable_by_category()
+    activity_before = sum(usable_before[c] for c in ACTIVITY_CATEGORIES)
+    short = [cat for cat in CATEGORIES if usable_before[cat] < MIN_PER_CATEGORY[cat]]
+    if activity_before < MIN_ACTIVITY_POOL:
+        short = list(CATEGORIES)
+    if any(p.constraints and p.constraints.alcohol_free for p in profiles):
+        short = [cat for cat in short if cat != "bar"]  # every bar is excluded by design; asking again is pointless
+    if short:
+        _report("Few taste-matched venues fit some categories; adding destination favourites from Qloo...", 44)
+        added = fetch_into_pool(False, 44, short)
+        usable_after = usable_by_category()
+        fallback_info = {
+            "used": True,
+            "stage": "destination_popular_within_constraints",
+            "categories": short,
+            "reason": "; ".join(f"{cat}: {usable_before[cat]} taste-matched venues fit the group's constraints" for cat in short),
+            "venues_added": added,
+            "usable_before": usable_before,
+            "usable_after": usable_after,
+            "relaxed": "taste signals",
+            "kept": ["destination", "budget (restaurants, cafes, bars, shops)", "alcohol-free", "accessibility", "Qloo category and genre metadata"],
+        }
 
     if not pool:
         raise RuntimeError(
@@ -363,7 +449,7 @@ def generate_plan(
     }
     activity_pool = [c for cat in ACTIVITY_CATEGORIES for c in by_cat[cat]]
     if not activity_pool:
-        raise RuntimeError(f"Qloo returned no activity venues in {destination} that satisfy the group's constraints.")
+        raise RuntimeError(_explain_empty_activity_pool(destination, pool, guardrail_records, price_cap, fallback_info, fetch_errors))
 
     # =================================================================
     # STEP 6: Spotlights, bridges & split-and-meet
@@ -504,6 +590,9 @@ def generate_plan(
                 bridge_for=bridge,
                 split_note=split_note
             )
+            from_fallback = chosen.id in fallback_ids
+            if from_fallback:
+                why_text += " A popular pick in this destination from Qloo, not matched to the group's taste signals."
 
             gr_info = guardrail_records.get(chosen.id, {})
             day_slots_output.append({
@@ -514,6 +603,7 @@ def generate_plan(
                 "candidate_id": chosen.id,
                 "location": chosen.location,
                 "qloo_genre": chosen.primary_genre,
+                "sourcing": "destination_popular" if from_fallback else "taste_matched",
                 "distance_km": distance_km.get(chosen.id),
                 "per_person": per_person_fit,
                 "qloo_affinity_per_person": dict(chosen.person_affinity),
@@ -605,17 +695,20 @@ def generate_plan(
         "shopping": _venue_summary(shopping_extra),
         "hidden_gem": _venue_summary(hidden_gem_extra),
         "wildcard": _venue_summary(wildcard_extra),
-        "playlist": [
-            {
-                "title": f"Taste Harmony Track #{idx+1}",
-                "artist": p.favorites[0].get("name", "Curated Artist") if isinstance(p.favorites[0], dict) else str(p.favorites[0]),
-                "vibe": "Eclectic / Ambient / Fusion",
-                "contributed_for": p.name,
-                "reason": f"Selected for {p.name} bridging individual taste affinity into group collective sound."
-            }
-            for idx, p in enumerate(profiles) if p.favorites
-        ]
     }
+
+    # Group playlist: built from Qloo artists and catalogue-verified tracks; failures are isolated
+    _report("Building group playlist...", 98)
+    extras_dict["music"] = safe_build_playlist(
+        cfg.get("music_mode", "favourites"), profiles, destination,
+        destination_query=getattr(trip, "destination_query", None), vibes=cfg.get("vibes"),
+        timeout_seconds=MUSIC_TIMEOUT_SECONDS
+    )
+
+    for summary, source in ((extras_dict["shopping"], shopping_extra), (extras_dict["hidden_gem"], hidden_gem_extra),
+                            (extras_dict["wildcard"], wildcard_extra)):
+        if summary and source:
+            summary["sourcing"] = "destination_popular" if source.id in fallback_ids else "taste_matched"
 
     fairness_res = fairness_summary(profiles, all_selected_candidates)
     fairness_res["basis"] = (
@@ -642,6 +735,8 @@ def generate_plan(
         "qloo_base_url": get_qloo_base_url(),
         "qloo_mode": "LIVE API (https://hackathon.api.qloo.com)" if not use_mock else "MOCK MODE",
         "location_query": location_query,
+        "budget_ceiling": ("$" * price_cap) if price_cap else None,
+        "fallback": fallback_info,
         "candidate_pool": {
             "total": len(pool),
             "center": {"lat": round(center[0], 5), "lon": round(center[1], 5)} if center else None,
@@ -686,6 +781,7 @@ def generate_plan(
         "stay": (
             {**_venue_summary(best_stay), "distance_km": distance_km.get(best_stay.id),
              "qloo_affinity_per_person": dict(best_stay.person_affinity),
+             "sourcing": "destination_popular" if best_stay.id in fallback_ids else "taste_matched",
              "guardrail_warning": stay_warning}
             if best_stay else None
         ),

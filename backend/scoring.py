@@ -27,6 +27,14 @@ PRICE_SCALE: Dict[str, int] = {
 }
 
 
+def group_budget_level(profiles: List[Profile]) -> Optional[int]:
+    """The group's price ceiling (1-4): its lowest member budget, or None when nobody set a limit."""
+    levels = [PRICE_SCALE[p.constraints.budget] for p in profiles
+              if p.constraints and p.constraints.budget in PRICE_SCALE]
+    ceiling = min(levels) if levels else None
+    return ceiling if ceiling is not None and ceiling < max(PRICE_SCALE.values()) else None
+
+
 def score_candidate_for_profile(candidate: Candidate, profile: Profile) -> float:
     """Returns a traveler's 0-1 fit score for a candidate.
 
@@ -236,7 +244,7 @@ def apply_constraints(
 
         # 1. Check Budget
         cand_price_level = PRICE_SCALE.get(cand.price_level, 2)
-        if cand.price_level is None:
+        if cand.price_level is None or not getattr(cand, "price_verified", True):
             passed_budget = True
             passed_budget_status = "unverified"
         elif cand_price_level > max_budget_level:
